@@ -1,6 +1,10 @@
-from app import create_app
+from flask import Flask
 
-app = create_app()
+app = Flask(__name__)
 
-if __name__ == '__main__':
+@app.route("/")
+def home():
+    return "Witaj w aplikacji QuizApp! 🚀"
+
+if __name__ == "__main__":
     app.run(debug=True)
