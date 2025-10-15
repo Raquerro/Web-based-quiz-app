@@ -12,29 +12,14 @@ bcrypt = Bcrypt()
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form.get("email")
+        username = request.form.get("username")
         password = request.form.get("password")
-        user = User.query.filter_by(email=email).first()
-        if user and bcrypt.check_password_hash(user.password, password):
+        user = User.query.filter_by(username=username).first()
+        if user and user.password == password:
             login_user(user)
             return redirect(url_for("homepage"))  # przekierowanie po poprawnym loginie
         return render_template("login.html", error="Niepoprawny email lub hasło")
     return render_template("login.html")
-
-
-# --------------------------
-# API login (JSON)
-# --------------------------
-@auth_bp.route("/api/login", methods=["POST"])
-def api_login():
-    data = request.get_json()
-    email = data.get("email")
-    password = data.get("password")
-    user = User.query.filter_by(email=email).first()
-    if user and bcrypt.check_password_hash(user.password, password):
-        login_user(user)
-        return {"message": f"Zalogowano jako {user.role}"}, 200
-    return {"message": "Nieprawidłowy email lub hasło"}, 401
 
 
 # --------------------------
