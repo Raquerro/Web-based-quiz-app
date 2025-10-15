@@ -48,13 +48,3 @@ http://localhost:5050 — pgAdmin (panel bazy danych)
 ## pgAdmin – interfejs graficzny bazy danych
 
 pgAdmin jest dostępny pod adresem: [http://localhost:5050](http://localhost:5050)  
-Dane logowania:
-- **Email:** admin@quiz.com
-- **Hasło:** admin
-
-Po zalogowaniu kliknij **Add New Server** i wprowadź:
-- Host: `db`
-- Port: `5432`
-- Database: `quizdb`
-- Username: `quizuser`
-- Password: `quizpass`

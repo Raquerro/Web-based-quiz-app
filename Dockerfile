@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Wskaż aplikację Flask
-ENV FLASK_APP=app.py
+ENV FLASK_APP=main/app.py
 
 # Uruchom aplikację
-CMD ["python", "app.py"]
+CMD ["python", "main/app.py"]
