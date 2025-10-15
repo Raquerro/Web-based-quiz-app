@@ -48,3 +48,12 @@ http://localhost:5050 — pgAdmin (panel bazy danych)
 ## pgAdmin – interfejs graficzny bazy danych
 
 pgAdmin jest dostępny pod adresem: [http://localhost:5050](http://localhost:5050)  
+
+## 🚀 Uruchamianie
+
+Domyślnie Docker Compose używa `docker-compose.yml`.  
+Tutaj korzystamy z pliku **`dev-docker-compose.yml`**, który jest przeznaczony do developmentu.
+
+### 1. Uruchomienie środowiska
+```bash
+docker compose -f dev-docker-compose.yml up --build

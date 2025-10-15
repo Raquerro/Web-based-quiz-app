@@ -1,81 +1,80 @@
-from flask import Blueprint, request
-from flask_login import login_user, logout_user, login_required, current_user, UserMixin
+from flask import Blueprint, request, render_template, redirect, url_for
+from flask_login import login_user, logout_user, login_required, current_user
+from main.models import User, db
 from flask_bcrypt import Bcrypt
 
 auth_bp = Blueprint("auth", __name__)
 bcrypt = Bcrypt()
 
-# Dummy users na razie (później zamienimy na bazę)
-users = {
-    "student@example.com": {"password": bcrypt.generate_password_hash("student123").decode('utf-8'), "role": "student"},
-    "teacher@example.com": {"password": bcrypt.generate_password_hash("teacher123").decode('utf-8'), "role": "teacher"}
-}
-
-# Minimalna klasa User
-class User(UserMixin):
-    def __init__(self, id_, email, role):
-        self.id = id_
-        self.email = email
-        self.role = role
-
-# Flask-Login loader (do użycia w app.py z login_manager)
-login_manager = None  # login_manager będziemy przekazywać z app.py później
-
-def init_login_manager(app, lm):
-    global login_manager
-    login_manager = lm
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        for email, data in users.items():
-            if email == user_id:
-                return User(user_id, email, data['role'])
-        return None
-
 # --------------------------
-# Endpointy
-# --------------------------
-
 # Logowanie
-@auth_bp.route("/login", methods=["POST"])
+# --------------------------
+@auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        user = User.query.filter_by(email=email).first()
+        if user and bcrypt.check_password_hash(user.password, password):
+            login_user(user)
+            return redirect(url_for("homepage"))  # przekierowanie po poprawnym loginie
+        return render_template("login.html", error="Niepoprawny email lub hasło")
+    return render_template("login.html")
+
+
+# --------------------------
+# API login (JSON)
+# --------------------------
+@auth_bp.route("/api/login", methods=["POST"])
+def api_login():
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
-    user_data = users.get(email)
-    if user_data and bcrypt.check_password_hash(user_data['password'], password):
-        user = User(email, email, user_data['role'])
+    user = User.query.filter_by(email=email).first()
+    if user and bcrypt.check_password_hash(user.password, password):
         login_user(user)
         return {"message": f"Zalogowano jako {user.role}"}, 200
     return {"message": "Nieprawidłowy email lub hasło"}, 401
 
+
+# --------------------------
 # Wylogowanie
-@auth_bp.route("/logout", methods=["GET"])
+# --------------------------
+@auth_bp.route("/logout")
 @login_required
 def logout():
     logout_user()
-    return {"message": "Wylogowano"}, 200
+    return redirect(url_for("auth.login"))  # po wylogowaniu wraca do logowania
 
-# Rejestracja (dummy, tylko dodaje do users)
-@auth_bp.route("/register", methods=["POST"])
-def register():
-    data = request.get_json()
-    email = data.get("email")
-    password = data.get("password")
-    role = data.get("role", "student")  # domyślnie student
 
-    if email in users:
-        return {"message": "Użytkownik już istnieje"}, 400
+# --------------------------
+# Rejestracja
+# --------------------------
+@auth_bp.route("/register", methods=["GET", "POST"])
+def register_page():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        role = request.form.get("role", "student")
 
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    users[email] = {"password": hashed_password, "role": role}
-    return {"message": f"Zarejestrowano użytkownika {email} jako {role}"}, 201
+        if User.query.filter_by(email=email).first():
+            return render_template("register.html", error="Użytkownik już istnieje")
 
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+        user = User(email=email, password=hashed_password, role=role)
+        db.session.add(user)
+        db.session.commit()
+        return redirect(url_for("auth.login"))
+    return render_template("register.html")
+
+
+# --------------------------
 # Informacje o aktualnym użytkowniku
-@auth_bp.route("/me", methods=["GET"])
+# --------------------------
+@auth_bp.route("/me")
 @login_required
 def me():
     return {
         "email": current_user.email,
         "role": current_user.role
-    }, 200
+    }

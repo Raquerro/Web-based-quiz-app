@@ -9,7 +9,7 @@
         {% if error %}
           <div class="alert alert-danger text-center">{{ error }}</div>
         {% endif %}
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('auth.login') }}">
           <div class="form-group mb-3">
             <label for="username" class="form-label">Nazwa użytkownika</label>
             <input type="text" class="form-control" id="username" name="username" required>
