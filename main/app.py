@@ -4,6 +4,8 @@ from flask_bcrypt import Bcrypt
 from main.models import db, User
 from main.config import Config
 from main.auth.routes import auth_bp
+from main.quiz.routes import quiz_bp
+from main.student.student_bp import student_bp
 
 app = Flask(__name__, template_folder="templates")
 app.config.from_object(Config)
@@ -31,7 +33,8 @@ def home_redirect():
     return redirect(url_for("auth.login"))
 
 app.register_blueprint(auth_bp)
-
+app.register_blueprint(quiz_bp)
+app.register_blueprint(student_bp)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
