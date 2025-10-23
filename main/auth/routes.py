@@ -18,7 +18,7 @@ def login():
         if user and user.password == password:
             login_user(user)
             return redirect(url_for("homepage"))  # przekierowanie po poprawnym loginie
-        return render_template("login.html", error="Niepoprawny email lub hasło")
+        return render_template("login.html", error="Niepoprawny login lub hasło")
     return render_template("login.html")
 
 

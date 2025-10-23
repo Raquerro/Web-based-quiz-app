@@ -50,7 +50,7 @@ docker compose -f dev-docker-compose.yml stop
 ```
 ### Wznawianie pracy na kontenerze 
 ```bash
-docker compose -f dev-docker-compose.yml start
+docker compose -f dev-docker-compose.yml up
 ```
 
 ## 🛑 Zatrzymywanie i usuwanie kontenerów
