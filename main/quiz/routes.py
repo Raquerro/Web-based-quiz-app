@@ -115,17 +115,16 @@ def add_question(quiz_id):
             return render_template("question_add.html", quiz=quiz)
 
         # Utwórz pytanie
-        question = Question(quiz_id=quiz.id, text=text.strip())
-        db.session.add(question)
-        db.session.flush()
+        question = Question(text=text.strip())
+        quiz.questions.append(question)  # automatycznie ustawia quiz_id
 
-        # Odpowiedzi
+        #odpowiedzi
         for i, a in enumerate(answers):
-            db.session.add(Answer(
-                question_id=question.id,
+            question.answers.append(Answer(
                 text=a.strip(),
                 is_correct=(i == correct_index)
             ))
+
 
         db.session.commit()
         flash("Pytanie dodane!", "success")
