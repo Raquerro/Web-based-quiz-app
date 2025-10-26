@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Nowy Quiz{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Utwórz nowy quiz</h3>
+  <form method="POST">
+    <div class="mb-3">
+      <label for="title" class="form-label">Tytuł quizu</label>
+      <input type="text" name="title" id="title" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Zapisz</button>
+    <a href="{{ url_for('quiz.my_quizzes') }}" class="btn btn-secondary">Powrót</a>
+  </form>
+</div>
+{% endblock %}

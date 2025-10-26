@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Dodaj pytanie{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow border-0">
+    <div class="card-body">
+      <h4 class="mb-3">Dodaj pytanie do quizu: <strong>{{ quiz.title }}</strong></h4>
+
+      <form method="POST">
+        <div class="mb-3">
+          <label for="text" class="form-label">Treść pytania</label>
+          <textarea class="form-control" id="text" name="text" rows="2" required></textarea>
+        </div>
+
+        <h5 class="mt-4">Odpowiedzi</h5>
+        <div id="answers-container">
+          <div class="input-group mb-2">
+            <span class="input-group-text">
+              <input type="radio" name="correct" value="0" required>
+            </span>
+            <input type="text" class="form-control" name="answers[]" placeholder="Odpowiedź 1" required>
+          </div>
+
+          <div class="input-group mb-2">
+            <span class="input-group-text">
+              <input type="radio" name="correct" value="1">
+            </span>
+            <input type="text" class="form-control" name="answers[]" placeholder="Odpowiedź 2" required>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addAnswer()">➕ Dodaj kolejną odpowiedź</button>
+
+        <div class="mt-4 d-flex justify-content-between">
+          <a href="{{ url_for('quiz.edit_quiz', quiz_id=quiz.id) }}" class="btn btn-outline-primary">← Zakończ dodawanie pytań</a>
+          <button type="submit" class="btn btn-success">💾 Zapisz pytanie</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+let answerCount = 2;
+function addAnswer() {
+  const container = document.getElementById("answers-container");
+  const index = answerCount++;
+
+  const div = document.createElement("div");
+  div.className = "input-group mb-2";
+  div.innerHTML = `
+    <span class="input-group-text">
+      <input type="radio" name="correct" value="${index}">
+    </span>
+    <input type="text" class="form-control" name="answers[]" placeholder="Odpowiedź ${index + 1}" required>
+  `;
+  container.appendChild(div);
+}
+</script>
+{% endblock %}

@@ -44,8 +44,8 @@ def create_quiz():
         )
         db.session.add(new_quiz)
         db.session.commit()
-        flash("Quiz został utworzony!", "success")
-        return redirect(url_for("quiz.my_quizzes"))
+        flash("Quiz został utworzony! Teraz możesz dodać pytania.", "success")
+        return redirect(url_for("quiz.add_question", quiz_id=new_quiz.id))
 
     return render_template("quiz_create.html")
 
@@ -131,3 +131,18 @@ def add_question(quiz_id):
         return redirect(url_for("quiz.edit_quiz", quiz_id=quiz.id))
 
     return render_template("question_add.html", quiz=quiz)
+
+    # --- Usuwanie pytania ---
+@quiz_bp.route("/<int:quiz_id>/delete_question/<int:question_id>", methods=["POST"])
+@login_required
+def delete_question(quiz_id, question_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    question = Question.query.get_or_404(question_id)
+
+    if quiz.teacher_id != current_user.id:
+        return "Brak uprawnień", 403
+
+    db.session.delete(question)
+    db.session.commit()
+    flash("Pytanie zostało usunięte.", "success")
+    return redirect(url_for("quiz.edit_quiz", quiz_id=quiz.id))

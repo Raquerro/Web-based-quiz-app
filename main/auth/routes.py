@@ -20,7 +20,7 @@ def login():
             return redirect(url_for("auth.login"))
 
         user = User.query.filter_by(username=username).first()
-        if not user or user.password != password:  # jawne porównanie
+        if not user or not bcrypt.check_password_hash(user.password, password):
             flash("Niepoprawny login lub hasło", "danger")
             return redirect(url_for("auth.login"))
         
