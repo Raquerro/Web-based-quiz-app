@@ -51,7 +51,6 @@ class Question(db.Model):
     quiz_id = db.Column(db.Integer, db.ForeignKey("quizzes.id"), nullable=False)
     text = db.Column(db.Text, nullable=False)
     question_type = db.Column(db.String(20), default="single")  # single/multiple
-    difficulty = db.Column(db.String(10), nullable=True)
 
     # Relacje
     quiz = db.relationship("Quiz", back_populates="questions")
