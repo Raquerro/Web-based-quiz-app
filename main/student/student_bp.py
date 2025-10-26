@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from models import db, Quiz, StudentQuiz, StudentAnswer, Question, Answer
+from main.models import db, Quiz, StudentQuiz, StudentAnswer, Question, Answer
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
 

@@ -2,7 +2,7 @@ import random
 import string
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from models import db, Quiz, StudentQuiz, Question, Answer
+from main.models import db, Quiz, StudentQuiz, Question, Answer
 
 quiz_bp = Blueprint("quiz", __name__, url_prefix="/quiz")
 

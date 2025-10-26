@@ -1,16 +1,19 @@
 from flask import Flask, redirect, url_for, render_template
 from flask_login import LoginManager, login_required
 from flask_bcrypt import Bcrypt
-from models import db, User
-from config import Config
-from auth.routes import auth_bp
-from quiz.routes import quiz_bp
-from student.student_bp import student_bp
+from flask_migrate import Migrate
+from main.models import db, User
+from main.config import Config
+from main.auth.routes import auth_bp
+from main.quiz.routes import quiz_bp
+from main.student.student_bp import student_bp
 
 app = Flask(__name__, template_folder="templates")
 app.config.from_object(Config)
 
+
 db.init_app(app)
+migrate = Migrate(app, db)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "auth.login"
