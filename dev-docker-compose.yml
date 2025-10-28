@@ -17,6 +17,9 @@ services:
     environment:
       - FLASK_DEBUG=1      # Włącza tryb debug
       - FLASK_ENV=development
+    networks:
+      - frontend
+      - backend
 
   db:
     image: postgres:15
@@ -31,6 +34,8 @@ services:
       - ./db_init:/docker-entrypoint-initdb.d  # dodanie danych do bazy przy buildzie
     ports:
       - "5432:5432"
+    networks:
+      - backend
 
   pgadmin:
     image: dpage/pgadmin4
@@ -45,7 +50,41 @@ services:
       - db
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - backend
+
+  # 🔹 Backup bazy danych na żądanie
+  backup:
+    image: postgres:15
+    container_name: quiz_backup
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      PGPASSWORD: ${DB_PASS}  
+      DB_USER: ${DB_USER} 
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME}
+    volumes:
+      - ./backup:/backup
+    command: >
+      bash -c "
+        mkdir -p /backup &&
+        echo 'Oczekiwanie na bazę danych' &&
+        until pg_isready -h quiz_db -U ${DB_USER} -d ${DB_NAME} > /dev/null 2>&1; do
+          sleep 2
+        done &&
+        echo 'Baza danych gotowa, tworzenie kopii zapasowej' &&
+        pg_dump -h quiz_db -U ${DB_USER} -d ${DB_NAME} > /backup/quizdb_$(date +%F_%H-%M-%S).sql
+      "
+    networks:
+      - backend
 
 volumes:
   db_data:
   pgadmin_data:
+
+networks:
+  frontend:
+  backend:
