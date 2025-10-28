@@ -7,6 +7,7 @@ __pycache__/
 .env
 db_data/
 *.sqlite3
+backup/
 
 # C extensions
 *.so
