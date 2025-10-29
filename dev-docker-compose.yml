@@ -53,33 +53,47 @@ services:
     networks:
       - backend
 
-  # 🔹 Backup bazy danych na żądanie
-  backup:
+  auto_backup:
     image: postgres:15
-    container_name: quiz_backup
+    container_name: quiz_auto_backup
     depends_on:
       - db
     env_file:
       - .env
     environment:
-      PGPASSWORD: ${DB_PASS}  
-      DB_USER: ${DB_USER} 
+      PGPASSWORD: ${DB_PASS}
+      DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
       DB_NAME: ${DB_NAME}
     volumes:
       - ./backup:/backup
     command: >
       bash -c "
-        mkdir -p /backup &&
-        echo 'Oczekiwanie na bazę danych' &&
-        until pg_isready -h quiz_db -U ${DB_USER} -d ${DB_NAME} > /dev/null 2>&1; do
-          sleep 2
-        done &&
-        echo 'Baza danych gotowa, tworzenie kopii zapasowej' &&
-        pg_dump -h quiz_db -U ${DB_USER} -d ${DB_NAME} > /backup/quizdb_$(date +%F_%H-%M-%S).sql
+        echo 'Tworzenie kopii zapasowej co 2 godziny...' &&
+        while true; do
+          echo 'Oczekiwanie...' &&
+          sleep 7200 &&
+          echo 'Sprawdzanie stanu bazy danych...' &&
+          until pg_isready -h quiz_db -U ${DB_USER} -d ${DB_NAME} > /dev/null 2>&1; do
+            sleep 5
+          done &&
+          echo 'Rozpoczynanie wykonywania kopii zapasowej...' &&
+          pg_dump -h quiz_db -U ${DB_USER} -d ${DB_NAME} > /backup/quizdb_$(date +%F_%H-%M-%S).sql &&
+          if [ $? -eq 0 ]; then
+            echo 'Utworzono kopię zapasową.' 
+          else
+            echo 'Błąd podczas tworzenia kopii zapasowej.' 
+          fi
+
+          echo 'Usuwanie starych kopii...'
+          find /backup -type f -name "*.sql" -mtime +3 -print -delete
+          echo 'Pozostałe kopie zapasowe:'
+          ls -lh /backup | grep ".sql"
+        done
       "
     networks:
       - backend
+
 
 volumes:
   db_data:
