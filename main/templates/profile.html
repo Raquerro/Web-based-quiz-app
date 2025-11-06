@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Mój profil{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row g-4">
+
+    <!-- Profil + Statystyki -->
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-lg border-0 rounded-4 h-100">
+        <div class="card-body p-4 text-center">
+          <div class="rounded-circle bg-light border d-flex justify-content-center align-items-center mb-3"
+               style="width: 90px; height: 90px;">
+            <i class="fas fa-user text-secondary" style="font-size: 40px;"></i>
+          </div>
+          <h3 class="fw-semibold mb-1">{{ user.username }}</h3>
+          <p class="text-muted mb-1">{{ user.email }}</p>
+          <span class="badge {% if user.role == 'teacher' %}bg-success{% else %}bg-info{% endif %} text-uppercase">
+            {{ user.role }}
+          </span>
+
+          <hr class="my-4">
+          <h5 class="fw-semibold mb-3">Statystyki konta</h5>
+          <ul class="list-group list-group-flush text-start">
+            {% if user.role == 'teacher' %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span class="fw-semibold text-secondary"><i class="fas fa-chalkboard-teacher me-2"></i> Stworzone quizy</span>
+              <span class="fw-bold">{{ user.quizzes|length }}</span>
+            </li>
+            {% else %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span class="fw-semibold text-secondary"><i class="fas fa-tasks me-2"></i> Dołaczono do quizów</span>
+              <span class="fw-bold">{{ user.student_quizzes|length }}</span>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zmień hasło -->
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-lg border-0 rounded-4 h-100">
+        <div class="card-body p-4">
+          <h5 class="fw-semibold mb-4 text-center">🔐 Zmień hasło</h5>
+
+          <form method="POST" class="needs-validation" novalidate>
+            {% for field, icon, placeholder in [
+              ('old_password', 'lock', 'Wprowadź stare hasło'),
+              ('new_password', 'key', 'Wprowadź nowe hasło')
+            ] %}
+            <div class="mb-3">
+              <label class="form-label">{{ field|replace('_', ' ')|title }}</label>
+              <div class="input-group rounded-3">
+                <span class="input-group-text bg-light"><i class="fas fa-{{ icon }}"></i></span>
+                <input type="password" name="{{ field }}" id="{{ field }}"
+                       class="form-control" placeholder="{{ placeholder }}" required>
+                <button class="btn btn-outline-secondary toggle-password" type="button">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+              {% if field == 'new_password' %}
+              <small class="text-muted">Hasło powinno mieć min. 8 znaków, cyfrę i znak specjalny.</small>
+              <div class="progress mt-2" style="height: 8px;">
+                <div id="password-strength" class="progress-bar" role="progressbar"></div>
+              </div>
+              <small id="password-strength-text" class="text-muted"></small>
+              {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 fw-semibold">
+              💾 Zapisz nowe hasło
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // toggle show/hide password
+  document.querySelectorAll('.toggle-password').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = btn.previousElementSibling;
+      if (input.type === "password") {
+        input.type = "text";
+        btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+      } else {
+        input.type = "password";
+        btn.innerHTML = '<i class="fas fa-eye"></i>';
+      }
+    });
+  });
+
+  // pasek siły hasła
+  const passwordInput = document.getElementById('new_password');
+  const strengthBar = document.getElementById('password-strength');
+  const strengthText = document.getElementById('password-strength-text');
+
+  passwordInput.addEventListener('input', () => {
+    const val = passwordInput.value;
+    let score = 0;
+    if (val.length > 0) score += 1;
+    if (val.length >= 8) score += 2;
+    if (val.length >= 12) score += 2;
+    if (/[A-Z]/.test(val)) score += 2;
+    if (/[0-9]/.test(val)) score += 2;
+    if (/[^A-Za-z0-9]/.test(val)) score += 2;
+
+    const percent = Math.min(score * 10, 100);
+    strengthBar.style.width = percent + '%';
+    strengthBar.className = 'progress-bar';
+
+    if (score <= 2) {
+      strengthBar.classList.add('bg-danger');
+      strengthText.textContent = "Słabe hasło";
+    } else if (score <= 4) {
+      strengthBar.classList.add('bg-warning');
+      strengthText.textContent = "Średnie hasło";
+    } else if (score <= 6) {
+      strengthBar.classList.add('bg-info');
+      strengthText.textContent = "Dobre hasło";
+    } else {
+      strengthBar.classList.add('bg-success');
+      strengthText.textContent = "Bardzo mocne hasło";
+    }
+  });
+</script>
+{% endblock %}

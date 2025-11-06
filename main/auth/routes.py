@@ -63,9 +63,12 @@ def register_page():
             return render_template("register.html", error="Wszystkie pola są wymagane")
         
         #Sprawdzenie czy użytkownik już istnieje
-        if User.query.filter_by(email=email).first() and User.query.filter_by(username=username).first():
-            return render_template("register.html", error="Użytkownik już istnieje")
-
+        if User.query.filter_by(email=email).first():
+            return render_template("register.html", error="Ten email jest już zajęty")
+        
+        if User.query.filter_by(username=username).first():
+            return render_template("register.html", error="Ta nazwa użytkownika jest już zajęta")
+        
         #Haszowanie hasła
         hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
@@ -88,3 +91,29 @@ def me():
         "role": current_user.role,
         "id": current_user.id
     }
+
+# --------------------------
+# Profil użytkownika
+# --------------------------
+
+@auth_bp.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    if request.method == "POST":
+        old_password = request.form.get("old_password")
+        new_password = request.form.get("new_password")
+
+        # Weryfikacja starego hasła
+        if not bcrypt.check_password_hash(current_user.password, old_password):
+            flash("Stare hasło jest nieprawidłowe", "danger")
+            return redirect(url_for("auth.profile"))
+
+        # Zapis nowego hasła
+        current_user.password = bcrypt.generate_password_hash(new_password).decode("utf-8")
+        db.session.commit()
+
+        flash("Hasło zostało zmienione pomyślnie!", "success")
+        return redirect(url_for("auth.profile"))
+
+    # GET -> wyświetlenie profilu
+    return render_template("profile.html", user=current_user)

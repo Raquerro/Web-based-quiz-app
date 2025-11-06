@@ -1,24 +1,22 @@
 from flask import render_template
 from flask_login import login_required, current_user
-from main.models import Quiz
+from main.models import Quiz, db
 from .. import quiz_bp
 
 # --- Statystyki quizu (dla nauczyciela) ---
 @quiz_bp.route("/stats/<int:quiz_id>")
 @login_required
 def quiz_stats(quiz_id):
-    quiz = Quiz.query.get_or_404(quiz_id)
+    quiz = db.session.get(Quiz, quiz_id)
     if quiz.teacher_id != current_user.id:
         return "Brak uprawnień", 403
 
-    student_quizzes = quiz.student_quizzes  # lista StudentQuiz
+    student_quizzes = quiz.student_quizzes
     total_students = len(student_quizzes)
     finished_students = [sq for sq in student_quizzes if sq.finished_at]
 
-    if not finished_students:
-        avg_score = highest_score = lowest_score = 0
-    else:
-        results = []
+    results_data = []  #
+    if finished_students:
         for sq in finished_students:
             total_q = len(quiz.questions)
             correct = 0
@@ -31,11 +29,23 @@ def quiz_stats(quiz_id):
                 if correct_answer and chosen == correct_answer:
                     correct += 1
             score = round((correct / total_q) * 100, 2) if total_q else 0
-            results.append(score)
 
-        avg_score = round(sum(results) / len(results), 2)
-        highest_score = max(results)
-        lowest_score = min(results)
+            results_data.append({
+                "username": sq.student.username,
+                "score": score
+            })
+
+        avg_score = round(sum(r["score"] for r in results_data) / len(results_data), 2)
+        highest_result = max(results_data, key=lambda r: r["score"])
+        lowest_result = min(results_data, key=lambda r: r["score"])
+        highest_score = highest_result["score"]
+        highest_user = highest_result["username"]
+        lowest_score = lowest_result["score"]
+        lowest_user = lowest_result["username"]
+
+    else:
+        avg_score = highest_score = lowest_score = 0
+        highest_user = lowest_user = None
 
     completion_rate = round((len(finished_students) / total_students) * 100, 2) if total_students else 0
 
@@ -46,6 +56,9 @@ def quiz_stats(quiz_id):
         finished_students=len(finished_students),
         avg_score=avg_score,
         highest_score=highest_score,
+        highest_user=highest_user,
         lowest_score=lowest_score,
-        completion_rate=completion_rate
+        lowest_user=lowest_user,
+        completion_rate=completion_rate,
+        results_data=results_data,  
     )
