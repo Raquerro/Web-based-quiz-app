@@ -1,5 +1,5 @@
 from flask import Flask, redirect, url_for, render_template
-from flask_login import LoginManager, login_required
+from flask_login import LoginManager, login_required, current_user
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from main.models import db, User
@@ -7,6 +7,7 @@ from main.config import Config
 from main.auth.routes import auth_bp
 from main.quiz import quiz_bp
 from main.student.student_bp import student_bp
+
 
 app = Flask(__name__, template_folder="templates")
 app.config.from_object(Config)
@@ -28,8 +29,13 @@ def load_user(user_id):
 @app.route("/home")
 @login_required
 def homepage():
-    users = User.query.all()
-    return render_template("home.html", users=users)
+    if current_user.role == "teacher":
+        return render_template("home_teacher.html")
+    elif current_user.role == "student":
+        return render_template("home_student.html")
+    else:
+        return redirect(url_for("auth.logout"))
+
 
 @app.route("/")
 def home_redirect():

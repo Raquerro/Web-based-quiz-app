@@ -11,7 +11,7 @@ student_bp = Blueprint("student", __name__, url_prefix="/student")
 @login_required
 def join_quiz():
     if current_user.role != "student":
-        return "Brak uprawnień", 403
+        return "Nauczyciel nie może dołączać do quizu!", 403
 
     if request.method == "POST":
         code = request.form.get("code", "").strip().upper()
@@ -120,4 +120,47 @@ def result_quiz(quiz_id):
         correct=correct_answers,
         total=total_questions,
         score=score_percent
+    )
+
+
+# --- Dla strony domowej ucznia ---
+@student_bp.route("/home")
+@login_required
+def home_student():
+    if current_user.role != "student":
+        return "Brak uprawnień", 403
+
+    # Pobierz wszystkie zakończone quizy ucznia
+    finished_quizzes = (
+        StudentQuiz.query.filter_by(student_id=current_user.id)
+        .filter(StudentQuiz.finished_at.isnot(None))
+        .order_by(StudentQuiz.finished_at.desc())
+        .all()
+    )
+
+    # Ostatni wynik (jeśli istnieje)
+    last_quiz = finished_quizzes[0] if finished_quizzes else None
+    last_score = None
+
+    if last_quiz:
+        quiz = last_quiz.quiz
+        total = len(quiz.questions)
+        correct = 0
+
+        for q in quiz.questions:
+            correct_answer = next((a.id for a in q.answers if a.is_correct), None)
+            chosen = next(
+                (sa.answer_id for sa in last_quiz.student_answers if sa.question_id == q.id),
+                None
+            )
+            if correct_answer and chosen == correct_answer:
+                correct += 1
+
+        last_score = round((correct / total) * 100, 2) if total else 0
+
+    return render_template(
+        "home_student.html",
+        last_quiz=last_quiz,
+        last_score=last_score,
+        total_quizzes=len(finished_quizzes)
     )
