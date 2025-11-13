@@ -39,3 +39,15 @@ def calculate_current_score(student_quiz, upto_index):
            next((a for a in q.answers if a.is_correct), None)
     )
     return f"{correct_count}/{upto_index + 1}"
+
+def calculate_quiz_result(student_quiz):
+    """
+    Zwraca tuple: (liczba_poprawnych, liczba_pytan)
+    """
+    total_questions = len(student_quiz.quiz.questions)
+    correct_count = sum(
+        1 for q in student_quiz.quiz.questions
+        if next((a.id for a in q.answers if a.is_correct), None) ==
+           next((sa.answer_id for sa in student_quiz.student_answers if sa.question_id == q.id), None)
+    )
+    return correct_count, total_questions

@@ -3,7 +3,7 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import current_user
 from math import ceil
 from main.models import db, Quiz, StudentQuiz, StudentAnswer
-from main.student.utils import calculate_quiz_score, get_question_review, calculate_current_score
+from main.student.utils import calculate_quiz_score, get_question_review, calculate_current_score, calculate_quiz_result
 
 # --- JOIN QUIZ ---
 def join_quiz_service():
@@ -85,13 +85,14 @@ def result_quiz_service(quiz_id):
         flash("Najpierw zakończ quiz", "warning")
         return redirect(url_for("student.solve_quiz", quiz_id=quiz.id))
 
-    score_percent = calculate_quiz_score(student_quiz)
-
+    correct, total = calculate_quiz_result(student_quiz)
+    score_percent = round((correct / total) * 100, 2) if total else 0
+    
     return render_template(
         "student_result.html",
         quiz=quiz,
-        correct=score_percent,  # Możesz też dodać total i poprawne jeśli chcesz w szablonie
-        total=len(quiz.questions),
+        correct=correct,
+        total=total,
         score=score_percent
     )
 
