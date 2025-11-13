@@ -1,10 +1,10 @@
-from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from . import student_bp
 from .services import (
     join_quiz_service,
     solve_quiz_service,
     result_quiz_service,
+    review_quiz_service,
     home_student_service,
 )
 
@@ -25,6 +25,10 @@ def solve_quiz(quiz_id):
 def result_quiz(quiz_id):
     return result_quiz_service(quiz_id)
 
+@student_bp.route("/review/<int:student_quiz_id>")
+@login_required
+def review_quiz(student_quiz_id):
+    return review_quiz_service(student_quiz_id)
 
 @student_bp.route("/home")
 @login_required
