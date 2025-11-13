@@ -7,7 +7,7 @@ from main.config import Config
 from main.auth.routes import auth_bp
 from main.quiz import quiz_bp
 from main.student import student_bp
-
+from main.teacher import teacher_bp
 
 app = Flask(__name__, template_folder="templates")
 app.config.from_object(Config)
@@ -44,6 +44,7 @@ def home_redirect():
 app.register_blueprint(auth_bp)
 app.register_blueprint(quiz_bp)
 app.register_blueprint(student_bp)
+app.register_blueprint(teacher_bp)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
