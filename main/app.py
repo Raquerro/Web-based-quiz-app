@@ -6,7 +6,7 @@ from main.models import db, User
 from main.config import Config
 from main.auth.routes import auth_bp
 from main.quiz import quiz_bp
-from main.student.student_bp import student_bp
+from main.student import student_bp
 
 
 app = Flask(__name__, template_folder="templates")

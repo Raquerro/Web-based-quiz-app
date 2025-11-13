@@ -1,15 +1,11 @@
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_required, current_user
-from main.models import db, Quiz, StudentQuiz, StudentAnswer, Question, Answer
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import current_user
+from math import ceil
+from main.models import db, Quiz, StudentQuiz, StudentAnswer
+from main.student.utils import calculate_quiz_score
 
-student_bp = Blueprint("student", __name__, url_prefix="/student")
-
-
-# --- Dołączanie do quizu po kodzie ---
-@student_bp.route("/join", methods=["GET", "POST"])
-@login_required
-def join_quiz():
+def join_quiz_service():
     if current_user.role != "student":
         return "Nauczyciel nie może dołączać do quizu!", 403
 
@@ -45,10 +41,7 @@ def join_quiz():
     return render_template("student_join.html")
 
 
-# --- Rozwiązywanie quizu ---
-@student_bp.route("/solve/<int:quiz_id>", methods=["GET", "POST"])
-@login_required
-def solve_quiz(quiz_id):
+def solve_quiz_service(quiz_id):
     if current_user.role != "student":
         return "Brak uprawnień", 403
 
@@ -85,10 +78,7 @@ def solve_quiz(quiz_id):
     return render_template("student_solve.html", quiz=quiz)
 
 
-# --- Wynik ucznia ---
-@student_bp.route("/result/<int:quiz_id>")
-@login_required
-def result_quiz(quiz_id):
+def result_quiz_service(quiz_id):
     if current_user.role != "student":
         return "Brak uprawnień", 403
 
@@ -122,45 +112,60 @@ def result_quiz(quiz_id):
         score=score_percent
     )
 
-
-# --- Dla strony domowej ucznia ---
-@student_bp.route("/home")
-@login_required
-def home_student():
+def home_student_service():
     if current_user.role != "student":
         return "Brak uprawnień", 403
 
-    # Pobierz wszystkie zakończone quizy ucznia
-    finished_quizzes = (
-        StudentQuiz.query.filter_by(student_id=current_user.id)
-        .filter(StudentQuiz.finished_at.isnot(None))
-        .order_by(StudentQuiz.finished_at.desc())
-        .all()
-    )
+    page = request.args.get("page", 1, type=int)
+    per_page = 10
+    status_filter = request.args.get("status", "all")  
+    sort_by = request.args.get("sort", "finished_at")  
 
-    # Ostatni wynik (jeśli istnieje)
+    query = StudentQuiz.query.filter_by(student_id=current_user.id)
+
+    if status_filter == "finished":
+        query = query.filter(StudentQuiz.finished_at.isnot(None))
+    elif status_filter == "unfinished":
+        query = query.filter(StudentQuiz.finished_at.is_(None))
+
+    all_quizzes = query.order_by(StudentQuiz.started_at.desc()).all()
+
+    quizzes_data = []
+    for sq in all_quizzes:
+        quizzes_data.append({
+            "id": sq.quiz.id,
+            "title": sq.quiz.title,
+            "status": "Ukończony" if sq.finished_at else "Nieukończony",
+            "score": calculate_quiz_score(sq) if sq.finished_at else None,
+            "finished_at": sq.finished_at
+        })
+
+    # Sortowanie
+    if sort_by == "score":
+        quizzes_data.sort(key=lambda x: (x["score"] is None, -x["score"] if x["score"] is not None else 0))
+    else:
+        quizzes_data.sort(key=lambda x: x["finished_at"] or datetime.min, reverse=True)
+
+    # Paginacja
+    total_quizzes = len(quizzes_data)
+    total_pages = ceil(total_quizzes / per_page)
+    start = (page - 1) * per_page
+    end = start + per_page
+    quizzes_page = quizzes_data[start:end]
+
+    # Ostatni ukończony quiz
+    finished_quizzes = [q for q in quizzes_data if q["status"] == "Ukończony"]
     last_quiz = finished_quizzes[0] if finished_quizzes else None
-    last_score = None
-
-    if last_quiz:
-        quiz = last_quiz.quiz
-        total = len(quiz.questions)
-        correct = 0
-
-        for q in quiz.questions:
-            correct_answer = next((a.id for a in q.answers if a.is_correct), None)
-            chosen = next(
-                (sa.answer_id for sa in last_quiz.student_answers if sa.question_id == q.id),
-                None
-            )
-            if correct_answer and chosen == correct_answer:
-                correct += 1
-
-        last_score = round((correct / total) * 100, 2) if total else 0
+    last_score = last_quiz["score"] if last_quiz else None
 
     return render_template(
         "home_student.html",
         last_quiz=last_quiz,
         last_score=last_score,
-        total_quizzes=len(finished_quizzes)
+        quizzes=quizzes_page,
+        total_quizzes=total_quizzes,
+        total_pages=total_pages,
+        current_page=page,
+        status_filter=status_filter,
+        sort_by=sort_by
     )

@@ -23,7 +23,7 @@ def add_question(quiz_id):
 
         # Utwórz pytanie
         question = Question(text=text.strip())
-        quiz.questions.append(question)  # automatycznie ustawia quiz_id
+        quiz.questions.append(question)  
 
         #odpowiedzi
         for i, a in enumerate(answers):
@@ -39,7 +39,7 @@ def add_question(quiz_id):
 
     return render_template("question_add.html", quiz=quiz)
 
-    # --- Usuwanie pytania ---
+# --- Usuwanie pytania ---
 @quiz_bp.route("/<int:quiz_id>/delete_question/<int:question_id>", methods=["POST"])
 @login_required
 def delete_question(quiz_id, question_id):
