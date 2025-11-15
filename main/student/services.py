@@ -96,8 +96,6 @@ def result_quiz_service(quiz_id):
         score=score_percent
     )
 
-
-# --- HOME STUDENT ---
 def home_student_service():
     if current_user.role != "student":
         return "Brak uprawnień", 403
@@ -107,6 +105,7 @@ def home_student_service():
     status_filter = request.args.get("status", "all")
     sort_by = request.args.get("sort", "finished_at")
 
+    # pobierz quizy studenta
     query = StudentQuiz.query.filter_by(student_id=current_user.id)
 
     if status_filter == "finished":
@@ -116,31 +115,32 @@ def home_student_service():
 
     all_quizzes = query.order_by(StudentQuiz.started_at.desc()).all()
 
-    quizzes_data = [{
-        "id": sq.quiz.id,
-        "title": sq.quiz.title,
-        "status": "Ukończony" if sq.finished_at else "Nieukończony",
-        "score": calculate_quiz_score(sq) if sq.finished_at else None,
-        "finished_at": sq.finished_at
-    } for sq in all_quizzes]
-
     # Sortowanie
     if sort_by == "score":
-        quizzes_data.sort(key=lambda x: (x["score"] is None, -x["score"] if x["score"] is not None else 0))
+        # sortujemy po wyniku obliczonym dynamicznie
+        all_quizzes.sort(
+            key=lambda sq: (
+                sq.finished_at is None,  # quizy nieukończone na końcu
+                -calculate_quiz_score(sq) if sq.finished_at else 0
+            )
+        )
     else:
-        quizzes_data.sort(key=lambda x: x["finished_at"] or datetime.min, reverse=True)
+        all_quizzes.sort(
+            key=lambda sq: sq.finished_at or datetime.min,
+            reverse=True
+        )
 
     # Paginacja
-    total_quizzes = len(quizzes_data)
+    total_quizzes = len(all_quizzes)
     total_pages = ceil(total_quizzes / per_page)
     start = (page - 1) * per_page
     end = start + per_page
-    quizzes_page = quizzes_data[start:end]
+    quizzes_page = all_quizzes[start:end]
 
     # Ostatni ukończony quiz
-    finished_quizzes = [q for q in quizzes_data if q["status"] == "Ukończony"]
+    finished_quizzes = [sq for sq in all_quizzes if sq.finished_at]
     last_quiz = finished_quizzes[0] if finished_quizzes else None
-    last_score = last_quiz["score"] if last_quiz else None
+    last_score = calculate_quiz_score(last_quiz) if last_quiz else None
 
     return render_template(
         "home_student.html",
@@ -153,7 +153,6 @@ def home_student_service():
         status_filter=status_filter,
         sort_by=sort_by
     )
-
 
 # --- REVIEW QUIZ ---
 def review_quiz_service(student_quiz_id):
