@@ -1,5 +1,5 @@
-from main.models import Quiz, StudentQuiz, db
-from sqlalchemy import func
+from main.models import Quiz, StudentQuiz, db, Question, Answer, StudentQuiz, StudentAnswer
+from sqlalchemy import func, case
 
 def get_last_quizzes(teacher_id, limit=3):
     """Zwraca ostatnie n quizów danego nauczyciela"""
@@ -37,12 +37,40 @@ def calculate_teacher_statistics(teacher_id):
         .count()
     )
 
-    # Średni wynik wszystkich quizów – lepiej policzyć w SQL, jeśli masz pole score
-    average_score = (
-        db.session.query(func.avg(StudentQuiz.score))
-        .filter(StudentQuiz.quiz_id.in_(quiz_ids))
-        .scalar()
+    # policz średni wynik na podstawie odpowiedzi
+    # najpierw liczba poprawnych odpowiedzi per StudentQuiz
+    correct_counts = (
+        db.session.query(
+            StudentAnswer.student_quiz_id.label("sq_id"),
+            func.count().label("correct_count")
+        )
+        .join(Answer, StudentAnswer.answer_id == Answer.id)
+        .filter(Answer.is_correct == True)
+        .group_by(StudentAnswer.student_quiz_id)
+        .subquery()
     )
+
+    # liczba pytań per quiz
+    question_counts = (
+        db.session.query(
+            Question.quiz_id.label("quiz_id"),
+            func.count().label("total_questions")
+        )
+        .group_by(Question.quiz_id)
+        .subquery()
+    )
+
+    # wynik procentowy dla każdego StudentQuiz
+    scores_query = (
+        db.session.query(
+            (correct_counts.c.correct_count * 100.0 / question_counts.c.total_questions).label("score")
+        )
+        .join(StudentQuiz, StudentQuiz.id == correct_counts.c.sq_id)
+        .join(question_counts, question_counts.c.quiz_id == StudentQuiz.quiz_id)
+        .filter(StudentQuiz.quiz_id.in_(quiz_ids))
+    )
+
+    average_score = db.session.query(func.avg(scores_query.subquery().c.score)).scalar()
     average_score = round(average_score, 2) if average_score else 0
 
     # Ostatni quiz
