@@ -4,17 +4,6 @@ from main.models import db, Quiz
 from .. import quiz_bp
 from .utils import generate_code
 
-# --- Lista quizów nauczyciela ---
-@quiz_bp.route("/my")
-@login_required
-def my_quizzes():
-    if current_user.role != "teacher":
-        return "Brak uprawnień", 403
-
-    quizzes = Quiz.query.filter_by(teacher_id=current_user.id).all()
-    return render_template("quiz_list.html", quizzes=quizzes)
-
-
 # --- Tworzenie nowego quizu ---
 @quiz_bp.route("/create", methods=["GET", "POST"])
 @login_required
