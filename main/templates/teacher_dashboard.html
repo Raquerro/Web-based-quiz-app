@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Panel nauczyciela{% endblock %}
+{% block content %}
+
+<div class="container mt-4">
+
+  <h2 class="mb-4">👨‍🏫 Panel nauczyciela</h2>
+
+  <div class="row">
+
+    <div class="col-lg-8">
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h4 class="mb-3">📈 Statystyki ogólne</h4>
+
+          <div class="row text-center">
+
+            <div class="col-md-4 mb-3">
+              <h6 class="text-muted">Unikalni uczniowie</h6>
+              <h3>{{ unique_students_count }}</h3>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <h6 class="text-muted">Średni wynik quizów</h6>
+              <h3>{{ "%0.1f"|format(average_score) }}%</h3>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <h6 class="text-muted">Ostatni dodany quiz</h6>
+
+              {% if last_quiz %}
+                <p class="mt-2 mb-0">
+                  <strong>{{ last_quiz.title }}</strong>
+                  <br>
+                  <small class="text-muted">
+                    {{ last_quiz.created_at.strftime('%Y-%m-%d %H:%M') }}
+                  </small>
+                </p>
+              {% else %}
+                <p class="mt-2 text-muted">Brak quizów</p>
+              {% endif %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h4 class="mb-3">🕒 Ostatnio utworzone quizy</h4>
+
+          {% if last_quizzes %}
+            <ul class="list-group">
+              {% for q in last_quizzes %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ q.title }}</strong><br>
+                    <small class="text-muted">Dodano: {{ q.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                  </div>
+                  <a href="{{ url_for('teacher.quiz_report', quiz_id=q.id) }}" class="btn btn-sm btn-outline-primary">
+                    📊 Raport
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-center py-3">
+                <p class="text-muted mb-0">Brak quizów do wyświetlenia.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-4">
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h4 class="mb-3">⚡ Szybkie akcje</h4>
+
+          <div class="d-grid gap-3">
+
+            <a href="{{ url_for('quiz.create_quiz') }}" class="btn btn-success">
+              ➕ Utwórz nowy quiz
+            </a>
+
+            <a href="{{ url_for('teacher.my_quizzes') }}" class="btn btn-primary">
+              📚 Zarządzaj quizami
+            </a>
+
+            <a href="{{ url_for('teacher.my_quizzes') }}" class="btn btn-outline-primary">
+              📊 Zobacz raporty
+            </a>
+            
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}

@@ -8,34 +8,31 @@ def teacher_dashboard_service():
     if current_user.role != "teacher":
         return "Brak uprawnień", 403
 
-    # Lista ostatnich 5 quizów
+    # 1. Pobierz listę ostatnich quizów
     last_quizzes = get_last_quizzes(current_user.id, limit=5)
 
-    # Statystyki ogólne
-    unique_students_count, average_score, last_quiz_info = calculate_teacher_statistics(current_user.id)
+    # 2. Pobierz statystyki (teraz to jest słownik!)
+    stats = calculate_teacher_statistics(current_user.id)
+    
+    # 3. Wyciągnij wartości ze słownika
+    unique_students_count = stats["unique_students_count"]
+    average_score = stats["average_score"]
+    last_quiz = stats["last_quiz"]
 
-    # Możesz zwrócić JSON lub renderować szablon
+    # 4. Przekaż do szablonu
     return render_template(
         "teacher_dashboard.html",
         last_quizzes=last_quizzes,
         unique_students_count=unique_students_count,
         average_score=average_score,
-        last_quiz=last_quiz_info
+        last_quiz=last_quiz  # Upewnij się, że nazwa zmiennej w html to last_quiz
     )
-
-    # Przykład JSON:
-    # return jsonify({
-    #     "last_quizzes": last_quizzes,
-    #     "unique_students_count": unique_students_count,
-    #     "average_score": average_score,
-    #     "last_quiz": last_quiz_info
-    # })
 
 def teacher_quizzes_service():
     if current_user.role != "teacher":
         return "Brak uprawnień", 403
 
-    quizzes = Quiz.query.filter_by(teacher_id=current_user.id).all()
+    quizzes = Quiz.query.filter_by(teacher_id=current_user.id).order_by(Quiz.created_at.desc()).all()
     return render_template("quiz_list.html", quizzes=quizzes)
 
 def teacher_quiz_report_service(quiz_id):

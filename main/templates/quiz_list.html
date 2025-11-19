@@ -25,16 +25,23 @@
             <td>{{ quiz.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
             <td>
               <a href="{{ url_for('quiz.edit_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-primary">Edytuj</a>
+
               <form method="POST" action="{{ url_for('quiz.delete_quiz', quiz_id=quiz.id) }}" style="display:inline;">
                 <button class="btn btn-sm btn-danger" onclick="return confirm('Na pewno usunąć quiz?')">Usuń</button>
               </form>
+
+              <a href="{{ url_for('teacher.quiz_report', quiz_id=quiz.id) }}" class="btn btn-sm btn-secondary">
+                Wyniki
+              </a>
             </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
   {% else %}
-    <p>Nie masz jeszcze żadnych quizów. <a href="{{ url_for('quiz.create_quiz') }}">Utwórz pierwszy!</a></p>
+    <p>Nie masz jeszcze żadnych quizów.  
+      <a href="{{ url_for('quiz.create_quiz') }}">Utwórz pierwszy!</a>
+    </p>
   {% endif %}
 </div>
 {% endblock %}

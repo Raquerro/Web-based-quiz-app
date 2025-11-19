@@ -29,10 +29,11 @@ def load_user(user_id):
 @app.route("/home")
 @login_required
 def homepage():
-    if current_user.role == "teacher":
-        return render_template("home_teacher.html")
-    elif current_user.role == "student":
-        return render_template("home_student.html")
+    if current_user.is_authenticated:
+        if current_user.role == 'teacher':
+            return redirect(url_for('teacher.home_teacher')) 
+        elif current_user.role == 'student':
+            return redirect(url_for('student.home_student'))
     else:
         return redirect(url_for("auth.logout"))
 

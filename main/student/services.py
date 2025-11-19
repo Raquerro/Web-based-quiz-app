@@ -143,7 +143,7 @@ def home_student_service():
     last_score = calculate_quiz_score(last_quiz) if last_quiz else None
 
     return render_template(
-        "home_student.html",
+        "student_dashboard.html",
         last_quiz=last_quiz,
         last_score=last_score,
         quizzes=quizzes_page,

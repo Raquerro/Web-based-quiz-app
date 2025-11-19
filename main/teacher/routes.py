@@ -4,7 +4,7 @@ from . import teacher_bp
 
 @teacher_bp.route("/home")
 @login_required
-def home_student():
+def home_teacher():
     return teacher_dashboard_service()
 
 # --- Lista quizów nauczyciela ---

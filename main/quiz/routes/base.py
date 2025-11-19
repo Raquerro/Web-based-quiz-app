@@ -47,7 +47,7 @@ def edit_quiz(quiz_id):
         quiz.title = title.strip()
         db.session.commit()
         flash("Quiz został zaktualizowany!", "success")
-        return redirect(url_for("quiz.my_quizzes"))
+        return redirect(url_for("teacher.my_quizzes"))#FIX
 
     return render_template("quiz_edit.html", quiz=quiz)
 
@@ -63,4 +63,4 @@ def delete_quiz(quiz_id):
     db.session.delete(quiz)
     db.session.commit()
     flash("Quiz został usunięty", "success")
-    return redirect(url_for("quiz.my_quizzes"))
+    return redirect(url_for("teacher.my_quizzes"))#FIX

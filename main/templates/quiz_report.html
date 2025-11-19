@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Raport quizu - {{ quiz.title }}{% endblock %}
+{% block content %}
+
+<div class="container mt-4">
+
+  <a href="{{ url_for('teacher.my_quizzes') }}" class="btn btn-secondary mb-3">⬅ Powrót</a>
+
+  <h2 class="mb-4">📊 Raport quizu: <strong>{{ quiz.title }}</strong></h2>
+
+  <!-- Sekcja statystyk ogólnych -->
+  <div class="row g-4 mb-4">
+
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="text-muted">Liczba zapisanych</h6>
+          <h3>{{ total_students }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="text-muted">Ukończyło quiz</h6>
+          <h3>{{ finished_students }}</h3>
+          <small class="text-muted">{{ completion_rate }}%</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="text-muted">Średni wynik</h6>
+          <h3>{{ avg_score }}%</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="text-muted">Mediana</h6>
+          <h3>{{ median_score }}%</h3>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Top / bottom scores -->
+  <div class="row g-4 mb-4">
+
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="text-muted">Najwyższy wynik</h6>
+          <h3 class="text-success">{{ highest_score }}%</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="text-muted">Najniższy wynik</h6>
+          <h3 class="text-danger">{{ lowest_score }}%</h3>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="my-4">
+
+  <!-- Ranking TOP 5 -->
+  <h3 class="mt-5 mb-3">🏆 TOP 5 Studentów</h3>
+
+  {% if top_students %}
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>Miejsce</th>
+          <th>Student</th>
+          <th>Wynik</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in top_students %}
+          <tr>
+            <td><strong>{{ loop.index }}</strong></td>
+            <td>{{ s.username }}</td>
+            <td>{{ s.score }}%</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Brak ukończonych prób quizu.</p>
+  {% endif %}
+
+  <hr class="my-4">
+
+  <!-- Lista wyników wszystkich studentów -->
+  <h3 class="mt-5 mb-3">📄 Wyniki studentów</h3>
+
+  {% if results_data %}
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Wynik</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results_data %}
+          <tr>
+            <td>{{ r.username }}</td>
+            <td>{{ r.score }}%</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Brak danych o wynikach.</p>
+  {% endif %}
+
+  <hr class="my-4">
+
+  <!-- Poprawność pytań -->
+  <h3 class="mt-5 mb-3">📘 Statystyki pytań</h3>
+
+  {% if question_accuracy %}
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Pytanie</th>
+          <th>Procent poprawnych odpowiedzi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in question_accuracy %}
+          <tr>
+            <td>{{ q.text }}</td>
+            <td>
+              <strong>{{ q.accuracy }}%</strong>
+              {% if q.accuracy >= 70 %}
+                <span class="badge bg-success ms-2">łatwe</span>
+              {% elif q.accuracy >= 40 %}
+                <span class="badge bg-warning text-dark ms-2">średnie</span>
+              {% else %}
+                <span class="badge bg-danger ms-2">trudne</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Brak danych o pytaniach.</p>
+  {% endif %}
+
+</div>
+
+{% endblock %}
