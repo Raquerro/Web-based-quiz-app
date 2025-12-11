@@ -2,14 +2,24 @@ version: "3.9"
 
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: dev.dockerfile
     container_name: quiz_web
     ports:
       - "5000:5000"
     env_file:
       - .env
+    volumes:
+      - .:/app             # <-- Montuje cały projekt (live reload)
     depends_on:
       - db
+    environment:
+      - FLASK_DEBUG=1      # Włącza tryb debug
+      - FLASK_ENV=development
+    networks:
+      - frontend
+      - backend
 
   db:
     image: postgres:15
@@ -21,6 +31,11 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - db_data:/var/lib/postgresql/data
+      - ./db_init:/docker-entrypoint-initdb.d  # dodanie danych do bazy przy buildzie
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
 
   pgadmin:
     image: dpage/pgadmin4
@@ -35,7 +50,55 @@ services:
       - db
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - backend
+
+  auto_backup:
+    image: postgres:15
+    container_name: quiz_auto_backup
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      PGPASSWORD: ${DB_PASS}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME}
+    volumes:
+      - ./backup:/backup
+    command: >
+      bash -c "
+        echo 'Tworzenie kopii zapasowej co 2 godziny...' &&
+        while true; do
+          echo 'Oczekiwanie...' &&
+          sleep 7200 &&
+          echo 'Sprawdzanie stanu bazy danych...' &&
+          until pg_isready -h quiz_db -U ${DB_USER} -d ${DB_NAME} > /dev/null 2>&1; do
+            sleep 5
+          done &&
+          echo 'Rozpoczynanie wykonywania kopii zapasowej...' &&
+          pg_dump -h quiz_db -U ${DB_USER} -d ${DB_NAME} > /backup/quizdb_$(date +%F_%H-%M-%S).sql &&
+          if [ $? -eq 0 ]; then
+            echo 'Utworzono kopię zapasową.' 
+          else
+            echo 'Błąd podczas tworzenia kopii zapasowej.' 
+          fi
+
+          echo 'Usuwanie starych kopii...'
+          find /backup -type f -name "*.sql" -mtime +3 -print -delete
+          echo 'Pozostałe kopie zapasowe:'
+          ls -lh /backup | grep ".sql"
+        done
+      "
+    networks:
+      - backend
+
 
 volumes:
   db_data:
   pgadmin_data:
+
+networks:
+  frontend:
+  backend:
