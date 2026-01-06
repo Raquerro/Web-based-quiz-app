@@ -42,6 +42,20 @@ def homepage():
 def home_redirect():
     return redirect(url_for("auth.login"))
 
+@app.route("/health/live")
+def liveness():
+    return {"status": "alive"}, 200
+
+@app.route("/health/ready")
+def readiness():
+    try:
+        with db.engine.connect() as conn:
+            pass  
+        return {"status": "ready"}, 200
+    except Exception as e:
+        print(f"BŁĄD BAZY: {e}") 
+        return {"status": "not ready", "error": str(e)}, 500
+
 app.register_blueprint(auth_bp)
 app.register_blueprint(quiz_bp)
 app.register_blueprint(student_bp)
