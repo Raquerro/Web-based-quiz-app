@@ -37,8 +37,8 @@ spec:
         command: ['sh', '-c', "until nc -zv quiz-db-service 5432; do echo waiting for db; sleep 5; done;"]
       containers:
       - name: quiz-web
-        image: quiz-web:latest
-        imagePullPolicy: Never
+        image: localhost:8000/quiz-web:latest
+        imagePullPolicy: IfNotPresent
         env:
         - name: DATABASE_URL
           valueFrom: { secretKeyRef: { name: quiz-secrets, key: DATABASE_URL } }

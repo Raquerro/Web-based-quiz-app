@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: quiz-pgadmin-service
+spec:
+  selector:
+    app: quiz-pgadmin
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 5050       
+      targetPort: 80    
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: quiz-pgadmin
+spec:
+  serviceName: quiz-pgadmin-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: quiz-pgadmin
+  template:
+    metadata:
+      labels:
+        app: quiz-pgadmin
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.28
+        command: ['sh', '-c', "until nc -zv quiz-db-service 5432; do echo waiting for db; sleep 5; done;"]
+      securityContext:
+        fsGroup: 5050
+      containers:
+      - name: pgadmin
+        image: dpage/pgadmin4
+        env:
+          - name: PGADMIN_DEFAULT_EMAIL   
+            valueFrom: { configMapKeyRef: { name: quiz-config, key: PGADMIN_DEFAULT_EMAIL } }
+          - name: PGADMIN_DEFAULT_PASSWORD  
+            valueFrom: { secretKeyRef: { name: quiz-secrets, key: PGADMIN_DEFAULT_PASSWORD} }
+        ports:
+        - containerPort: 80
+          name: pgadmin
+        resources:
+          requests:
+            cpu: "150m"
+            memory: "256Mi"
+          limits:
+            cpu: "250m"
+            memory: "512Mi"
+        startupProbe:
+          httpGet:
+            path: /misc/ping
+            port: 80
+          initialDelaySeconds: 60
+          failureThreshold: 20
+          periodSeconds: 10
+          timeoutSeconds: 5           
+        livenessProbe:
+          httpGet:
+            path: /misc/ping
+            port: 80
+          periodSeconds: 10
+          failureThreshold: 5
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /misc/ping
+            port: 80
+          periodSeconds: 5
+          failureThreshold: 5
+          timeoutSeconds: 5
+
+        volumeMounts: 
+        - name: pgadmin-persistent-storage
+          mountPath: /var/lib/pgadmin
+      volumes:
+      - name: pgadmin-persistent-storage
+        persistentVolumeClaim:
+          claimName: pgadmin-pv-claim
+

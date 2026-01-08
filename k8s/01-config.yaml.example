@@ -6,7 +6,7 @@ data:
   DB_NAME: "twoja_nazwa_bazy"
   DB_USER: "twoj_user"
   DB_HOST: "quiz-db"
-
+  PGADMIN_DEFAULT_EMAIL: ""
 
 apiVersion: v1
 kind: Secret
@@ -15,6 +15,7 @@ metadata:
 type: Opaque
 data:
   DB_PASS: ""
+  PGADMIN_DEFAULT_PASSWORD:""
   DATABASE_URL: ""
 
 # Tutaj wpisz hasło zakodowane w Base64 (komenda: echo -n 'haslo' | base64)

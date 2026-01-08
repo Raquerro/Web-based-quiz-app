@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: db-postgres-backup
+spec:
+  schedule: "*/10 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+            fsGroup: 999
+          containers:
+          - name: postgres-backup
+            image: postgres:15-alpine
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: POSTGRES_DB   
+              valueFrom: { configMapKeyRef: { name: quiz-config, key: DB_NAME } }
+            - name: POSTGRES_USER  
+              valueFrom: { configMapKeyRef: { name: quiz-config, key: DB_USER } }
+            - name: POSTGRES_PASSWORD 
+              valueFrom: { secretKeyRef: { name: quiz-secrets, key: DB_PASS } }
+            - name: PGPASSWORD 
+              valueFrom: { secretKeyRef: { name: quiz-secrets, key: DB_PASS } }
+            command:
+            - /bin/sh
+            - -c
+            - |
+              if pg_isready -h quiz-db-service -U $POSTGRES_USER; then
+                pg_dump -h quiz-db-service -U $POSTGRES_USER $POSTGRES_DB > /backup/db-$(date +%F_%H-%M).sql
+                cd /backup && ls -t db-*.sql | tail -n +6 | xargs -r rm
+              else
+                exit 1
+              fi
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backup
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: cronjob-pv-claim
+          restartPolicy: OnFailure
+
