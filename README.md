@@ -125,3 +125,5 @@ podman compose -f dev-docker-compose.yml down -v --remove-orphans
 ```
 🔸 --remove-orphans usuwa kontenery niepowiązane z bieżącym plikiem Compose.
 🔸 -v usuwa wolumeny, czyli dane (np. bazy, pliki).
+
+### W projekcie opracowane zostały manifesty kubernetes

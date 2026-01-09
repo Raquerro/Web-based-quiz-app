@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      securityContext:
+          fsGroup: 2000
+          runAsGroup: 2000
+          runAsUser: 2000
+      serviceAccountName: prometheus-sa 
+      containers:
+        - name: prometheus
+          image: prom/prometheus:main
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus/"
+            - "--storage.tsdb.retention.time=15d" 
+            - "--web.enable-lifecycle" 
+          ports:
+            - containerPort: 9090
+              name: web
+          startupProbe:
+            httpGet:
+              path: /-/healthy
+              port: web
+            failureThreshold: 30
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: web
+            initialDelaySeconds: 5
+            timeoutSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: web
+            initialDelaySeconds: 5
+            timeoutSeconds: 30
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "386Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/prometheus/
+            - name: storage-volume
+              mountPath: /prometheus/
+      volumes:
+        - name: config-volume
+          configMap:
+            name: prometheus-config 
+        - name: storage-volume
+          persistentVolumeClaim:
+            claimName: prometheus-pv-claim

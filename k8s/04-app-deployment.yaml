@@ -31,11 +31,16 @@ spec:
     metadata:
       labels:
         app: quiz-web
+      annotations:
+        prometheus.io/scrape: "true"   
+        prometheus.io/port: "5000"   
+        prometheus.io/path: "/metrics"
     spec:
       spec:
       initContainers:
       - name: wait-for-db
         image: busybox:1.28
+        imagePullPolicy: IfNotPresent
         command: ['sh', '-c', "until nc -zv quiz-db-service 5432; do echo waiting for db; sleep 5; done;"]
       containers:
       - name: quiz-web

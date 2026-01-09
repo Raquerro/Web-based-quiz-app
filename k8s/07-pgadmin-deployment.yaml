@@ -6,11 +6,12 @@ metadata:
 spec:
   selector:
     app: quiz-pgadmin
-  type: LoadBalancer
+  type: NodePort
   ports:
     - protocol: TCP
-      port: 5050       
-      targetPort: 80    
+      port: 80       
+      targetPort: 5050
+      nodePort: 30001    
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -27,10 +28,15 @@ spec:
     metadata:
       labels:
         app: quiz-pgadmin
+      annotations:
+        prometheus.io/scrape: "true"   
+        prometheus.io/port: "5050"   
+        prometheus.io/path: "/metrics"
     spec:
       initContainers:
       - name: wait-for-db
         image: busybox:1.28
+        imagePullPolicy: IfNotPresent
         command: ['sh', '-c', "until nc -zv quiz-db-service 5432; do echo waiting for db; sleep 5; done;"]
       securityContext:
         fsGroup: 5050
@@ -74,7 +80,6 @@ spec:
           periodSeconds: 5
           failureThreshold: 5
           timeoutSeconds: 5
-
         volumeMounts: 
         - name: pgadmin-persistent-storage
           mountPath: /var/lib/pgadmin

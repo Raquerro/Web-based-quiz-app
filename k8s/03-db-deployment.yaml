@@ -26,6 +26,9 @@ spec:
     metadata:
       labels:
         app: quiz-db
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9187"
     spec:
       containers:
       - name: postgres
@@ -78,6 +81,20 @@ spec:
         volumeMounts: 
         - name: postgres-persistent-storage
           mountPath: /var/lib/postgresql/data
+      - name: postgres-exporter
+        image: prometheuscommunity/postgres-exporter
+        ports:
+          - containerPort: 9187
+            name: metrics
+        env:
+          - name: POSTGRES_USER
+            valueFrom: { configMapKeyRef: { name: quiz-config, key: DB_USER } }
+          - name: POSTGRES_PASSWORD
+            valueFrom: { secretKeyRef: { name: quiz-secrets, key: DB_PASS } }
+          - name: POSTGRES_DB
+            valueFrom: { configMapKeyRef: { name: quiz-config, key: DB_NAME } }
+          - name: DATA_SOURCE_NAME
+            value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
       volumes:
       - name: postgres-persistent-storage
         persistentVolumeClaim:

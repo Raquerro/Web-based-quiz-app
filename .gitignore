@@ -34,6 +34,7 @@ MANIFEST
 backup/*
 !/backup/readme.md
 k8s/01-config.yaml
+k8s/16-grafana-config.yaml
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
