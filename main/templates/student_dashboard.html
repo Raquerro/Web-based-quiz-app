@@ -2,62 +2,87 @@
 {% block title %}Panel ucznia{% endblock %}
 {% block content %}
 
-<div class="container mt-4">
+<div class="container mt-5">
 
-    <h2 class="mb-4">🎓 Panel ucznia — {{ current_user.username }}</h2>
+    <div class="d-flex align-items-center mb-5">
+        <div class="rounded-circle p-3 me-3 d-flex align-items-center justify-content-center" 
+             style="width: 60px; height: 60px; background-color: var(--app-accent); color: #020617;">
+            <i class="fas fa-graduation-cap fa-2x"></i>
+        </div>
+        <div>
+            <h2 class="mb-0 fw-bold">Witaj, {{ current_user.username }}!</h2>
+            <p class="text-muted mb-0">Zarządzaj swoimi testami i sprawdzaj postępy.</p>
+        </div>
+    </div>
 
-    <div class="row">
+    <div class="row g-4">
 
         <div class="col-lg-4">
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-body text-center">
-                    <h4 class="mb-3">📊 Ostatnio wykonany</h4>
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-chart-line text-primary me-2"></i>
+                        <h5 class="card-title mb-0 fw-bold">Ostatnio wykonany</h5>
+                    </div>
 
                     {% if last_quiz %}
-                        <p><strong>{{ last_quiz.quiz.title }}</strong></p>
-                        <p class="text-muted">
-                            {{ last_quiz.finished_at.strftime('%Y-%m-%d %H:%M') }}
-                        </p>
+                        <div class="text-center py-3">
+                            <p class="mb-1 fw-semibold">{{ last_quiz.quiz.title }}</p>
+                            <small class="text-muted d-block mb-3">
+                                <i class="far fa-calendar-alt me-1"></i> {{ last_quiz.finished_at.strftime('%Y-%m-%d %H:%M') }}
+                            </small>
 
-                        <h3 class="{% if last_score >= 50 %}text-success{% else %}text-danger{% endif %}">
-                            {{ last_score }}%
-                        </h3>
+                            <div class="display-5 fw-bold {% if last_score >= 50 %}text-success{% else %}text-danger{% endif %} mb-3">
+                                {{ last_score }}%
+                            </div>
 
-                        <a href="{{ url_for('student.result_quiz', quiz_id=last_quiz.quiz.id) }}"
-                           class="btn btn-outline-primary mt-2">
-                            Szczegóły
-                        </a>
+                            <a href="{{ url_for('student.result_quiz', quiz_id=last_quiz.quiz.id) }}"
+                               class="btn btn-sm btn-outline-primary w-100 rounded-pill">
+                                <i class="fas fa-eye me-1"></i> Szczegóły wyniku
+                            </a>
+                        </div>
                     {% else %}
-                        <p class="text-muted">Brak wykonanych quizów.</p>
+                        <div class="text-center py-4 text-muted">
+                            <small>Brak wykonanych quizów.</small>
+                        </div>
                     {% endif %}
                 </div>
             </div>
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-body text-center">
-                    <h4 class="mb-3">📚 Twoje quizy</h4>
-                    <h2>{{ total_quizzes }}</h2>
-                    <p class="text-muted small">Przypisane do Ciebie</p>
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-book text-primary me-2"></i>
+                            <h5 class="card-title mb-0 fw-bold">Twoje quizy</h5>
+                        </div>
+                        <small class="text-muted">Przypisane arkusze</small>
+                    </div>
+                    <div class="h2 mb-0 fw-bold text-primary">{{ total_quizzes }}</div>
                 </div>
             </div>
 
-            <div class="card shadow-sm mb-4">
+            <div class="card shadow-sm border-0">
                 <div class="card-body">
-                    <h4 class="mb-3 text-center">🔑 Dołącz do quizu</h4>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-key text-primary me-2"></i>
+                        <h5 class="card-title mb-0 fw-bold">Dołącz do quizu</h5>
+                    </div>
 
                     <form method="POST" action="{{ url_for('student.join_quiz') }}">
                         <div class="mb-3">
                             <input type="text"
                                    name="code"
-                                   class="form-control text-center"
-                                   placeholder="Wpisz kod quizu"
+                                   class="form-control form-control-lg text-center fw-bold"
+                                   placeholder="KOD-QUIZU"
+                                   style="letter-spacing: 1px;"
                                    maxlength="10"
                                    required>
                         </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-success">Dołącz</button>
-                        </div>
+                        <button type="submit" class="btn btn-accent w-100 py-2 shadow-sm rounded-pill">
+                            <i class="fas fa-plus-circle me-1"></i> Dołącz
+                        </button>
                     </form>
                 </div>
             </div>
@@ -66,79 +91,101 @@
 
         <div class="col-lg-8">
 
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="mb-0">📝 Twoje Quizy</h4>
-                        <div class="btn-group btn-group-sm">
-                            <a href="{{ url_for('student.home_student', status='all') }}" class="btn btn-outline-secondary">Wszystkie</a>
-                            <a href="{{ url_for('student.home_student', status='unfinished') }}" class="btn btn-outline-secondary">Do zrobienia</a>
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-clipboard-list fa-lg text-primary me-2"></i>
+                            <h4 class="mb-0 fw-bold">Dostępne arkusze</h4>
+                        </div>
+                        <div class="btn-group shadow-sm">
+                            <a href="{{ url_for('student.home_student', status='all') }}" 
+                               class="btn btn-sm {% if request.args.get('status') != 'unfinished' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                Wszystkie
+                            </a>
+                            <a href="{{ url_for('student.home_student', status='unfinished') }}" 
+                               class="btn btn-sm {% if request.args.get('status') == 'unfinished' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                Do zrobienia
+                            </a>
                         </div>
                     </div>
+                </div>
 
+                <div class="card-body px-4 pb-4">
                     {% if quizzes %}
-                        <ul class="list-group list-group-flush">
-                            {# Iterujemy po liście 'quizzes', która zawiera obiekty StudentQuiz (oznaczmy jako sq) #}
+                        <div class="list-group list-group-flush mt-2">
                             {% for sq in quizzes %}
-                                <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-                                    <div>
-                                        <h5 class="mb-1">{{ sq.quiz.title }}</h5>
-                                        <small class="text-muted">
-                                            Kod: {{ sq.quiz.code }} | 
+                                <div class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center py-4 px-0 border-bottom bg-transparent">
+                                    <div class="mb-3 mb-md-0">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <h5 class="mb-0 fw-bold me-2">{{ sq.quiz.title }}</h5>
                                             {% if sq.finished_at %}
-                                                <span class="text-success">Ukończono: {{ sq.finished_at.strftime('%Y-%m-%d') }}</span>
+                                                <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle small">
+                                                    Ukończono
+                                                </span>
                                             {% else %}
-                                                <span class="text-warning">Rozpoczęto: {{ sq.started_at.strftime('%Y-%m-%d') }}</span>
+                                                <span class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle small">
+                                                    W toku
+                                                </span>
                                             {% endif %}
-                                        </small>
+                                        </div>
+                                        <div class="text-muted small">
+                                            <span class="me-3"><i class="fas fa-hashtag me-1"></i>{{ sq.quiz.code }}</span>
+                                            {% if sq.finished_at %}
+                                                <span><i class="far fa-calendar-check me-1"></i>{{ sq.finished_at.strftime('%Y-%m-%d') }}</span>
+                                            {% else %}
+                                                <span><i class="far fa-calendar me-1"></i>Od: {{ sq.started_at.strftime('%Y-%m-%d') }}</span>
+                                            {% endif %}
+                                        </div>
                                     </div>
 
                                     <div>
                                         {% if sq.finished_at %}
                                             <a href="{{ url_for('student.result_quiz', quiz_id=sq.quiz.id) }}"
-                                               class="btn btn-outline-primary btn-sm">
-                                                📊 Wynik
+                                               class="btn btn-outline-primary btn-sm px-3 rounded-pill">
+                                                <i class="fas fa-chart-bar me-1"></i> Wynik
                                             </a>
                                         {% else %}
                                             <a href="{{ url_for('student.solve_quiz', quiz_id=sq.quiz.id) }}"
-                                               class="btn btn-success btn-sm">
-                                                ▶ Rozwiąż
+                                               class="btn btn-accent btn-sm px-4 rounded-pill shadow-sm">
+                                                <i class="fas fa-play me-1"></i> Rozwiąż
                                             </a>
                                         {% endif %}
                                     </div>
-                                </li>
+                                </div>
                             {% endfor %}
-                        </ul>
+                        </div>
 
                         {% if total_pages > 1 %}
                         <nav class="mt-4">
                             <ul class="pagination justify-content-center">
-
                                 <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
-                                    <a class="page-link" href="{{ url_for('student.home_student', page=current_page-1) }}">«</a>
+                                    <a class="page-link border-0 shadow-sm mx-1 rounded" href="{{ url_for('student.home_student', page=current_page-1) }}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
                                 </li>
-
                                 {% for p in range(1, total_pages + 1) %}
                                     <li class="page-item {% if p == current_page %}active{% endif %}">
-                                        <a class="page-link" href="{{ url_for('student.home_student', page=p) }}">
+                                        <a class="page-link border-0 shadow-sm mx-1 rounded {% if p == current_page %}bg-primary{% endif %}" 
+                                           href="{{ url_for('student.home_student', page=p) }}">
                                             {{ p }}
                                         </a>
                                     </li>
                                 {% endfor %}
-
                                 <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
-                                    <a class="page-link" href="{{ url_for('student.home_student', page=current_page+1) }}">»</a>
+                                    <a class="page-link border-0 shadow-sm mx-1 rounded" href="{{ url_for('student.home_student', page=current_page+1) }}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
                                 </li>
-
                             </ul>
                         </nav>
                         {% endif %}
 
                     {% else %}
-                        <div class="text-center py-5 text-muted">
-                            <p class="mb-0">Brak quizów do wyświetlenia.</p>
-                            <small>Dołącz do nowego quizu używając kodu po lewej stronie.</small>
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3 opacity-50"></i>
+                            <p class="mb-0 text-muted fs-5">Brak quizów do wyświetlenia.</p>
+                            <small class="text-muted">Wpisz kod otrzymany od nauczyciela, aby rozpocząć.</small>
                         </div>
                     {% endif %}
 
@@ -152,13 +199,19 @@
 </div>
 
 <div aria-live="polite" aria-atomic="true" class="position-relative">
-  <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+  <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
-          <div class="toast align-items-center text-bg-{{ category }} border-0 show" role="alert">
+          {% set bg_class = 'primary' %}
+          {% if category == 'danger' %}{% set bg_class = 'danger' %}
+          {% elif category == 'success' %}{% set bg_class = 'success' %}{% endif %}
+          
+          <div class="toast align-items-center text-bg-{{ bg_class }} border-0 show mb-2 shadow" role="alert">
             <div class="d-flex">
-              <div class="toast-body">{{ message }}</div>
+              <div class="toast-body">
+                <i class="fas fa-info-circle me-2"></i> {{ message }}
+              </div>
               <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
           </div>
@@ -171,7 +224,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const toastElList = [].slice.call(document.querySelectorAll('.toast'))
-  toastElList.map(el => new bootstrap.Toast(el, { autohide: true, delay: 3000 })).forEach(t => t.show());
+  toastElList.map(el => {
+    const t = new bootstrap.Toast(el, { autohide: true, delay: 5000 });
+    return t.show();
+  });
 });
 </script>
 
