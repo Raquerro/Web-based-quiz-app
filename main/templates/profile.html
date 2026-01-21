@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Mój profil{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-5 text-center">
+        <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle mb-3" style="width: 60px; height: 60px;">
+            <i class="fas fa-user-cog fa-2x"></i>
+        </div>
+        <h2 class="fw-bold mb-0">Ustawienia profilu</h2>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <div class="col-12 col-lg-5">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4 p-md-5 text-center">
+                    <div class="mx-auto rounded-circle bg-body-tertiary border d-flex justify-content-center align-items-center mb-4 shadow-sm"
+                         style="width: 100px; height: 100px;">
+                        <i class="fas fa-user text-primary opacity-50" style="font-size: 45px;"></i>
+                    </div>
+
+                    <h3 class="fw-bold mb-1">{{ user.username }}</h3>
+                    <p class="text-body-secondary mb-3">{{ user.email }}</p>
+
+                    <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 text-uppercase fw-bold small">
+                        <i class="fas {% if user.role == 'teacher' %}fa-graduation-cap{% else %}fa-user-graduate{% endif %} me-1"></i>
+                        {{ user.role }}
+                    </span>
+
+                    <div class="mt-5 text-start">
+                        <h6 class="small text-uppercase fw-bold text-body-secondary mb-3 tracking-wider">Podsumowanie konta</h6>
+                        <div class="p-3 rounded-4 bg-body-tertiary border border-light-subtle">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold">
+                                    <i class="fas {% if user.role == 'teacher' %}fa-layer-group{% else %}fa-clipboard-check{% endif %} text-primary me-2"></i>
+                                    {% if user.role == 'teacher' %}Stworzone quizy{% else %}Ukończone quizy{% endif %}
+                                </span>
+                                <span class="badge bg-primary rounded-pill px-3">{{ user.quizzes|length if user.role == 'teacher' else user.student_quizzes|length }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       <div class="col-12 col-lg-6">
+    <div class="card shadow-sm border-0 rounded-4 h-100">
+        <div class="card-body p-4 p-md-5">
+            <h5 class="fw-bold mb-4">
+                <i class="fas fa-shield-alt text-primary me-2"></i>Hasło
+            </h5>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }} alert-dismissible fade show rounded-4 border-0 mb-4 shadow-sm py-3" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas {% if category == 'success' %}fa-check-circle text-success{% else %}fa-exclamation-triangle text-danger{% endif %} me-3 fa-lg"></i>
+                        <div class="fw-bold">{{ message }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <p class="text-body-secondary small mb-4">Zalecamy używanie silnego hasła, aby chronić dostęp do Twojego konta.</p>
+
+            <form method="POST" class="needs-validation" novalidate>
+                <div class="mb-4">
+                    <label class="form-label small text-uppercase fw-bold text-body-secondary">Obecne hasło</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-body-tertiary border-end-0">
+                            <i class="fas fa-lock text-body-secondary"></i>
+                        </span>
+                        <input type="password" name="old_password" id="old_password" class="form-control border-start-0 ps-2" placeholder=" Wprowadź stare hasło" required>
+                        <button class="btn btn-outline-secondary border-start-0 toggle-password px-3" type="button">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small text-uppercase fw-bold text-body-secondary">Nowe hasło</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-body-tertiary border-end-0">
+                            <i class="fas fa-key text-body-secondary"></i>
+                        </span>
+                        <input type="password" name="new_password" id="new_password" class="form-control border-start-0 ps-2" placeholder=" Wprowadź nowe hasło" required>
+                        <button class="btn btn-outline-secondary border-start-0 toggle-password px-3" type="button">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="progress rounded-pill bg-body-tertiary" style="height: 4px;">
+                        <div id="password-strength" class="progress-bar transition-all" role="progressbar"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small id="password-strength-text" class="text-body-secondary smaller fw-semibold"></small>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-accent w-100 py-3 rounded-pill fw-bold shadow-sm mt-2">
+                    <i class="fas fa-save me-1"></i> Zaktualizuj hasło
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .smaller { font-size: 0.75rem; }
+    .transition-all { transition: all 0.3s ease-in-out; }
+    
+    /* Spójny wygląd input-group przy focusie */
+    .input-group:focus-within .input-group-text {
+        border-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+</style>
+
+<script>
+    // Przełączanie widoczności hasła
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const input = btn.parentElement.querySelector('input');
+            const icon = btn.querySelector('i');
+            if (input.type === "password") {
+                input.type = "text";
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = "password";
+                icon.className = 'fas fa-eye';
+            }
+        });
+    });
+
+    // Pasek siły hasła
+    const passwordInput = document.getElementById('new_password');
+    const strengthBar = document.getElementById('password-strength');
+    const strengthText = document.getElementById('password-strength-text');
+
+    passwordInput.addEventListener('input', () => {
+        const val = passwordInput.value;
+        let score = 0;
+        if (val.length > 0) score += 1;
+        if (val.length >= 8) score += 2;
+        if (val.length >= 12) score += 2;
+        if (/[A-Z]/.test(val)) score += 2;
+        if (/[0-9]/.test(val)) score += 2;
+        if (/[^A-Za-z0-9]/.test(val)) score += 2;
+
+        const percent = Math.min(score * 10, 100);
+        strengthBar.style.width = percent + '%';
+        
+        // Reset klas
+        strengthBar.className = 'progress-bar transition-all';
+
+        if (val.length === 0) {
+            strengthText.textContent = "";
+        } else if (score <= 3) {
+            strengthBar.classList.add('bg-danger');
+            strengthText.textContent = "Słabe hasło";
+            strengthText.className = "text-danger smaller fw-semibold";
+        } else if (score <= 6) {
+            strengthBar.classList.add('bg-warning');
+            strengthText.textContent = "Średnie hasło";
+            strengthText.className = "text-warning smaller fw-semibold";
+        } else {
+            strengthBar.classList.add('bg-success');
+            strengthText.textContent = "Mocne hasło";
+            strengthText.className = "text-success smaller fw-semibold";
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Dodaj pytanie{% endblock %}
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <div class="mb-4">
+                <a href="{{ url_for('quiz.edit_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-link text-decoration-none p-0 mb-2 text-body-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Powrót do edycji
+                </a>
+                <h2 class="fw-bold mb-0">Dodaj nowe pytanie</h2>
+                <p class="text-body-secondary">Quiz: <span class="text-primary fw-semibold">{{ quiz.title }}</span></p>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    
+                    <form method="POST">
+                        <div class="mb-4">
+                            <label for="text" class="form-label small text-uppercase fw-bold text-body-secondary">Treść pytania</label>
+                            <textarea class="form-control" id="text" name="text" rows="3" 
+                                      placeholder="Wpisz treść pytania..." required autofocus></textarea>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between mb-3 mt-5">
+                            <h5 class="fw-bold mb-0">Odpowiedzi</h5>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Zaznacz poprawną</span>
+                        </div>
+                        
+                        <div id="answers-container">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text border-end-0 bg-body-tertiary">
+                                    <input type="radio" class="form-check-input mt-0" name="correct" value="0" required>
+                                </span>
+                                <input type="text" class="form-control" name="answers[]" placeholder="Treść pierwszej odpowiedzi" required>
+                            </div>
+
+                            <div class="input-group mb-3">
+                                <span class="input-group-text border-end-0 bg-body-tertiary">
+                                    <input type="radio" class="form-check-input mt-0" name="correct" value="1">
+                                </span>
+                                <input type="text" class="form-control" name="answers[]" placeholder="Treść drugiej odpowiedzi" required>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 mt-2" onclick="addAnswer()">
+                            <i class="fas fa-plus me-1"></i> Dodaj kolejną opcję
+                        </button>
+
+                        <hr class="my-5 opacity-10">
+
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                            <a href="{{ url_for('quiz.edit_quiz', quiz_id=quiz.id) }}" class="btn btn-outline-primary rounded-pill px-4 order-2 order-md-1">
+                                <i class="fas fa-check me-1"></i> Powrót
+                            </a>
+                            <button type="submit" class="btn btn-accent btn-lg rounded-pill px-5 shadow-sm fw-bold order-1 order-md-2">
+                                <i class="fas fa-save me-1"></i> Zapisz pytanie
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+let answerCount = 2;
+function addAnswer() {
+  const container = document.getElementById("answers-container");
+  const index = answerCount++;
+
+  const div = document.createElement("div");
+  div.className = "input-group mb-3";
+  div.innerHTML = `
+    <span class="input-group-text border-end-0 bg-body-tertiary">
+      <input type="radio" class="form-check-input mt-0" name="correct" value="${index}">
+    </span>
+    <input type="text" class="form-control" name="answers[]" placeholder="Odpowiedź ${index + 1}" required>
+  `;
+  container.appendChild(div);
+}
+</script>
+
+{% endblock %}

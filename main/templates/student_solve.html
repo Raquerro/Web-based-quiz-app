@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Rozwiązywanie quizu{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle mb-3" style="width: 60px; height: 60px;">
+            <i class="fas fa-brain fa-2x"></i>
+        </div>
+        <h2 class="fw-bold">{{ quiz.title }}</h2>
+        <p class="text-body-secondary">Odpowiedz na wszystkie pytania. Powodzenia!</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <form method="POST" class="needs-validation" novalidate>
+                {% for question in quiz.questions %}
+                <div class="card mb-4 shadow-sm border-0 rounded-4 overflow-hidden">
+                    <div class="bg-body-tertiary px-4 py-2 border-bottom border-light-subtle">
+                        <span class="small fw-bold text-body-secondary text-uppercase tracking-wider">
+                            Pytanie {{ loop.index }} z {{ quiz.questions|length }}
+                        </span>
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4">{{ question.text }}</h5>
+
+                        <div class="quiz-options">
+                            {% for answer in question.answers %}
+                            <div class="mb-2">
+                                <input class="btn-check" type="radio" name="{{ question.id }}" id="answer_{{ answer.id }}" value="{{ answer.id }}" required>
+                                <label class="btn btn-outline-secondary w-100 text-start p-3 rounded-3 d-flex align-items-center justify-content-between border-2" for="answer_{{ answer.id }}">
+                                    <span>{{ answer.text }}</span>
+                                    <i class="fas fa-check-circle check-icon opacity-0"></i>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="invalid-feedback text-end small fw-bold">
+                            <i class="fas fa-exclamation-triangle me-1"></i> Wybierz odpowiedź przed wysłaniem.
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-3 mt-5 mb-5">
+                    <a href="{{ url_for('student.home_student') }}" class="btn btn-outline-secondary rounded-pill px-4 order-2 order-md-1">
+                        <i class="fas fa-times me-1"></i> Anuluj podejście
+                    </a>
+                    <button type="submit" class="btn btn-accent btn-lg rounded-pill px-5 shadow-sm fw-bold order-1 order-md-2">
+                        Zakończ i wyślij <i class="fas fa-paper-plane ms-2"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Spójna kolorystyka zaznaczenia */
+    .btn-check:checked + .btn-outline-secondary {
+        background-color: var(--bs-primary-bg-subtle) !important;
+        border-color: var(--bs-primary) !important;
+        color: var(--bs-primary-emphasis) !important;
+    }
+
+    /* Płynne pojawianie się ikony check */
+    .btn-check:checked + .btn-outline-secondary .check-icon {
+        opacity: 1 !important;
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    /* Hover na opcje */
+    .btn-outline-secondary:hover {
+        background-color: var(--bs-tertiary-bg);
+        border-color: var(--bs-secondary-color);
+    }
+
+    /* Wyraźniejsza walidacja */
+    .was-validated .btn-check:invalid + .btn-outline-secondary {
+        border-color: var(--bs-danger-border-subtle);
+    }
+</style>
+
+<script>
+(() => {
+  'use strict';
+  const forms = document.querySelectorAll('.needs-validation');
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Płynne przewinięcie do pierwszego pytania bez odpowiedzi
+        const firstInvalid = form.querySelector(':invalid');
+        if (firstInvalid) {
+            firstInvalid.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+})();
+</script>
+{% endblock %}

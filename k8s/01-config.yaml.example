@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: quiz-web-app
+  labels:
+    env: production
+    team: student-project
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config
+data:
+  DB_NAME: "twoja_nazwa_bazy"
+  DB_USER: "twoj_user"
+  DB_HOST: "quiz-db"
+  PGADMIN_DEFAULT_EMAIL: ""
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-quiz
+type: Opaque
+data:
+  DB_PASS: ""
+  PGADMIN_DEFAULT_PASSWORD:""
+  DATABASE_URL: ""
+  DB_DATA: ""
+
+# Tutaj wpisz hasło zakodowane w Base64 (komenda: echo -n 'haslo' | base64)
+kubectl get secret nazwa_sekretu -o jsonpath='{.data}'
+echo 'UyFCXCpkJHpEc2I9' | base64 --decode

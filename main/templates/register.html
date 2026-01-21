@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Rejestracja{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-5">
+            
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle mb-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-user-plus fa-2x"></i>
+                </div>
+                <h2 class="fw-bold">Załóż konto</h2>
+                <p class="text-body-secondary">Dołącz do naszej społeczności i zacznij naukę</p>
+            </div>
+
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4 p-md-5">
+
+                    {% if error %}
+                        <div class="alert alert-danger border-0 small fw-bold mb-4 rounded-3 text-center">
+                            <i class="fas fa-exclamation-circle me-2"></i> {{ error }}
+                        </div>
+                    {% endif %}
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} border-0 small fw-bold mb-4 rounded-3 text-center">
+                                    <i class="fas fa-info-circle me-2"></i> {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="username" class="form-label small text-uppercase fw-bold text-body-secondary">Nazwa użytkownika</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-body-tertiary border-end-0">
+                                        <i class="fas fa-user text-body-secondary"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 ps-2" id="username" name="username" placeholder="Podaj swój login" required>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label for="email" class="form-label small text-uppercase fw-bold text-body-secondary">Adres e-mail</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-body-tertiary border-end-0">
+                                        <i class="fas fa-envelope text-body-secondary"></i>
+                                    </span>
+                                    <input type="email" class="form-control border-start-0 ps-2" id="email" name="email" placeholder=" email@przyklad.pl" required>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label for="password" class="form-label small text-uppercase fw-bold text-body-secondary">Hasło</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-body-tertiary border-end-0">
+                                        <i class="fas fa-key text-body-secondary"></i>
+                                    </span>
+                                    <input type="password" class="form-control border-start-0 ps-2" id="password" name="password" placeholder="Podaj swoje hasło" required>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mb-4">
+                                <label for="role" class="form-label small text-uppercase fw-bold text-body-secondary">Rola</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-body-tertiary border-end-0">
+                                        <i class="fas fa-id-card text-body-secondary"></i>
+                                    </span>
+                                    <select name="role" id="role" class="form-select border-start-0 ps-2">
+                                        <option value="student" selected> Uczeń</option>
+                                        <option value="teacher"> Nauczyciel</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-accent btn-lg w-100 rounded-pill fw-bold shadow-sm py-3">
+                            Utwórz konto <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+
+            <div class="text-center mt-4 text-body-secondary">
+                Masz już konto? 
+                <a href="{{ url_for('auth.login') }}" class="text-primary fw-bold text-decoration-none">Zaloguj się</a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

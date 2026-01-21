@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: quiz-web-service
+  namespace: quiz-web-app
+spec:
+  sessionAffinity: ClientIP
+  selector:
+    app: quiz-web
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: flask-port
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quiz-web-deployment
+  namespace: quiz-web-app
+spec:
+  selector:
+    matchLabels:
+      app: quiz-web
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1       
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: quiz-web
+      annotations:
+        prometheus.io/scrape: "true"   
+        prometheus.io/port: "5000"   
+        prometheus.io/path: "/metrics"
+    spec:
+      spec:
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.28
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', "until nc -zv quiz-db-service 5432; do echo waiting for db; sleep 5; done;"]
+      containers:
+      - name: quiz-web
+        image: localhost:8000/app-web:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: DATABASE_URL
+          valueFrom: { secretKeyRef: { name: quiz-secrets, key: DATABASE_URL } }
+        ports:
+        - containerPort: 5000
+          name: flask-port
+        startupProbe:
+          httpGet:
+            path: /health/ready
+            port: 5000
+          initialDelaySeconds: 10
+          failureThreshold: 30  
+          periodSeconds: 10
+          timeoutSeconds: 30
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 5
+        resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"

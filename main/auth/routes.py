@@ -1,81 +1,119 @@
-from flask import Blueprint, request
-from flask_login import login_user, logout_user, login_required, current_user, UserMixin
+from flask import Blueprint, request, render_template, redirect, url_for, flash, session
+from flask_login import login_user, logout_user, login_required, current_user
+from main.models import User, db
 from flask_bcrypt import Bcrypt
 
 auth_bp = Blueprint("auth", __name__)
 bcrypt = Bcrypt()
 
-# Dummy users na razie (później zamienimy na bazę)
-users = {
-    "student@example.com": {"password": bcrypt.generate_password_hash("student123").decode('utf-8'), "role": "student"},
-    "teacher@example.com": {"password": bcrypt.generate_password_hash("teacher123").decode('utf-8'), "role": "teacher"}
-}
-
-# Minimalna klasa User
-class User(UserMixin):
-    def __init__(self, id_, email, role):
-        self.id = id_
-        self.email = email
-        self.role = role
-
-# Flask-Login loader (do użycia w app.py z login_manager)
-login_manager = None  # login_manager będziemy przekazywać z app.py później
-
-def init_login_manager(app, lm):
-    global login_manager
-    login_manager = lm
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        for email, data in users.items():
-            if email == user_id:
-                return User(user_id, email, data['role'])
-        return None
-
 # --------------------------
-# Endpointy
-# --------------------------
-
 # Logowanie
-@auth_bp.route("/login", methods=["POST"])
+# --------------------------
+@auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    data = request.get_json()
-    email = data.get("email")
-    password = data.get("password")
-    user_data = users.get(email)
-    if user_data and bcrypt.check_password_hash(user_data['password'], password):
-        user = User(email, email, user_data['role'])
-        login_user(user)
-        return {"message": f"Zalogowano jako {user.role}"}, 200
-    return {"message": "Nieprawidłowy email lub hasło"}, 401
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
 
+        if not username or not password:
+            flash("Wszystkie pola są wymagane", "danger")
+            return redirect(url_for("auth.login"))
+
+        user = User.query.filter_by(username=username).first()
+        if not user or not bcrypt.check_password_hash(user.password, password):
+            flash("Niepoprawny login lub hasło", "danger")
+            return redirect(url_for("auth.login"))
+        
+        login_user(user)
+        flash(f"Zalogowano pomyślnie, {user.username}!", "success")
+        return redirect(url_for("homepage"))  
+    
+    return render_template("login.html")
+
+
+# --------------------------
 # Wylogowanie
-@auth_bp.route("/logout", methods=["GET"])
+# --------------------------
+@auth_bp.route("/logout")
 @login_required
 def logout():
     logout_user()
-    return {"message": "Wylogowano"}, 200
+    session.clear()     # wyczyszczenie sesji
+    flash("Pomyślnie wylogowano", "info")
+    return redirect(url_for("auth.login"))  
 
-# Rejestracja (dummy, tylko dodaje do users)
-@auth_bp.route("/register", methods=["POST"])
-def register():
-    data = request.get_json()
-    email = data.get("email")
-    password = data.get("password")
-    role = data.get("role", "student")  # domyślnie student
 
-    if email in users:
-        return {"message": "Użytkownik już istnieje"}, 400
+# --------------------------
+# Rejestracja
+# --------------------------
+@auth_bp.route("/register", methods=["GET", "POST"])
+def register_page():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "").strip()
+        role = request.form.get("role", "student")
+        
+        # Zabepieczenie ról
+        if role not in ["student", "teacher"]:
+            role = "student"
 
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    users[email] = {"password": hashed_password, "role": role}
-    return {"message": f"Zarejestrowano użytkownika {email} jako {role}"}, 201
+        # Walidacja pól
+        if not username or not email or not password:
+            return render_template("register.html", error="Wszystkie pola są wymagane")
+        
+        #Sprawdzenie czy użytkownik już istnieje
+        if User.query.filter_by(email=email).first():
+            return render_template("register.html", error="Ten email jest już zajęty")
+        
+        if User.query.filter_by(username=username).first():
+            return render_template("register.html", error="Ta nazwa użytkownika jest już zajęta")
+        
+        #Haszowanie hasła
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
+        #tworzenie użytkownika
+        user = User(username=username, email=email, password=hashed_password, role=role)
+        db.session.add(user)
+        db.session.commit()
+        return redirect(url_for("auth.login"))
+    return render_template("register.html")
+
+
+# --------------------------
 # Informacje o aktualnym użytkowniku
-@auth_bp.route("/me", methods=["GET"])
+# --------------------------
+@auth_bp.route("/me")
 @login_required
 def me():
     return {
-        "email": current_user.email,
-        "role": current_user.role
-    }, 200
+        "username": current_user.username,
+        "role": current_user.role,
+        "id": current_user.id
+    }
+
+# --------------------------
+# Profil użytkownika
+# --------------------------
+
+@auth_bp.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    if request.method == "POST":
+        old_password = request.form.get("old_password")
+        new_password = request.form.get("new_password")
+
+        # Weryfikacja starego hasła
+        if not bcrypt.check_password_hash(current_user.password, old_password):
+            flash("Stare hasło jest nieprawidłowe", "danger")
+            return redirect(url_for("auth.profile"))
+
+        # Zapis nowego hasła
+        current_user.password = bcrypt.generate_password_hash(new_password).decode("utf-8")
+        db.session.commit()
+
+        flash("Hasło zostało zmienione pomyślnie!", "success")
+        return redirect(url_for("auth.profile"))
+
+    # GET -> wyświetlenie profilu
+    return render_template("profile.html", user=current_user)

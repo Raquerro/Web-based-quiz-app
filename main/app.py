@@ -1,68 +1,65 @@
-import os
-from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for
-from flask_login import LoginManager
+from flask import Flask, redirect, url_for, render_template
+from flask_login import LoginManager, login_required, current_user
 from flask_bcrypt import Bcrypt
-from models import db, User
-from auth.routes import auth_bp
+from flask_migrate import Migrate
+from main.models import db, User
+from main.config import Config
+from main.auth.routes import auth_bp
+from main.quiz import quiz_bp
+from main.student import student_bp
+from main.teacher import teacher_bp
 
-# --- Wczytanie zmiennych środowiskowych ---
-load_dotenv()
-
-# --- Tworzenie aplikacji ---
 app = Flask(__name__, template_folder="templates")
+app.config.from_object(Config)
 
-# --- Konfiguracja aplikacji ---
-app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
-app.config['DEBUG'] = os.getenv("DEBUG") == "True"
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@db:5432/{os.getenv('DB_NAME')}"
-)
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# --- Inicjalizacja rozszerzeń ---
 db.init_app(app)
+migrate = Migrate(app, db)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "auth.login"
 
-# --- Ładowanie użytkownika dla Flask-Login ---
+with app.app_context():
+    db.create_all()
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- Tworzenie tabel przy starcie ---
-with app.app_context():
-    db.create_all()
-
-# --- Routing ---
-@app.route("/")
-def home():
-    return redirect(url_for('login'))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-
-        # Sprawdzenie użytkownika z bazy
-        user = User.query.filter_by(username=username).first()
-        if user: #and bcrypt.check_password_hash(user.password, password):
-            return redirect(url_for("homepage"))
-        else:
-            return render_template("login.html", error="Niepoprawne dane logowania")
-
-    return render_template('login.html')
-
-@app.route('/home')
+@app.route("/home")
+@login_required
 def homepage():
-    users = User.query.all()
-    return render_template('home.html', users=users)
+    if current_user.is_authenticated:
+        if current_user.role == 'teacher':
+            return redirect(url_for('teacher.home_teacher')) 
+        elif current_user.role == 'student':
+            return redirect(url_for('student.home_student'))
+    else:
+        return redirect(url_for("auth.logout"))
 
-# --- Rejestracja blueprintów ---
+
+@app.route("/")
+def home_redirect():
+    return redirect(url_for("auth.login"))
+
+@app.route("/health/live")
+def liveness():
+    return {"status": "alive"}, 200
+
+@app.route("/health/ready")
+def readiness():
+    try:
+        with db.engine.connect() as conn:
+            pass  
+        return {"status": "ready"}, 200
+    except Exception as e:
+        print(f"BŁĄD BAZY: {e}") 
+        return {"status": "not ready", "error": str(e)}, 500
+
 app.register_blueprint(auth_bp)
+app.register_blueprint(quiz_bp)
+app.register_blueprint(student_bp)
+app.register_blueprint(teacher_bp)
 
-# --- Uruchomienie ---
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)

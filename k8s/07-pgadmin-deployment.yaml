@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: quiz-pgadmin-service
+  namespace: quiz-web-app
+spec:
+  selector:
+    app: quiz-pgadmin
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80       
+      targetPort: 80
+      nodePort: 30001    
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: quiz-pgadmin
+  namespace: quiz-web-app
+spec:
+  serviceName: quiz-pgadmin-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: quiz-pgadmin
+  template:
+    metadata:
+      labels:
+        app: quiz-pgadmin
+      annotations:
+        prometheus.io/scrape: "true"   
+        prometheus.io/port: "5050"   
+        prometheus.io/path: "/metrics"
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.28
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', "until nc -zv quiz-db-service 5432; do echo waiting for db; sleep 5; done;"]
+      securityContext:
+        fsGroup: 5050
+      containers:
+      - name: pgadmin
+        image: dpage/pgadmin4
+        env:
+          - name: PGADMIN_DEFAULT_EMAIL   
+            valueFrom: { configMapKeyRef: { name: quiz-config, key: PGADMIN_DEFAULT_EMAIL } }
+          - name: PGADMIN_DEFAULT_PASSWORD  
+            valueFrom: { secretKeyRef: { name: quiz-secrets, key: PGADMIN_DEFAULT_PASSWORD} }
+        ports:
+        - containerPort: 80
+          name: pgadmin
+        resources:
+          requests:
+            cpu: "300m"
+            memory: "512Mi"
+          limits:
+            cpu: "600m"
+            memory: "1Gi"
+        startupProbe:
+          httpGet:
+            path: /misc/ping
+            port: 80
+          initialDelaySeconds: 60
+          failureThreshold: 20
+          periodSeconds: 10
+          timeoutSeconds: 5           
+        livenessProbe:
+          httpGet:
+            path: /misc/ping
+            port: 80
+          periodSeconds: 10
+          failureThreshold: 5
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /misc/ping
+            port: 80
+          periodSeconds: 5
+          failureThreshold: 5
+          timeoutSeconds: 5
+        volumeMounts: 
+        - name: pgadmin-persistent-storage
+          mountPath: /var/lib/pgadmin
+      volumes:
+      - name: pgadmin-persistent-storage
+        persistentVolumeClaim:
+          claimName: pgadmin-pv-claim
+
