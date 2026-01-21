@@ -10,9 +10,9 @@ spec:
       template:
         spec:
           securityContext:
-            runAsUser: 999
-            runAsGroup: 999
-            fsGroup: 999
+            runAsUser: 70
+            runAsGroup: 70
+            fsGroup: 70
           containers:
           - name: postgres-backup
             image: postgres:15-alpine

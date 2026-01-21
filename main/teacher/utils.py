@@ -10,7 +10,7 @@ def get_last_quizzes(teacher_id, limit=3):
         .all()
     )
     return [
-        {"id": q.id, "title": q.title, "created_at": q.created_at}
+        {"id": q.id, "title": q.title, "created_at": q.created_at, "code": q.code}
         for q in quizzes
     ]
 

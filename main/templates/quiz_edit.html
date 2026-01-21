@@ -2,62 +2,90 @@
 {% block title %}Edytuj quiz{% endblock %}
 {% block content %}
 
-
 <div class="container mt-5">
-  <div class="card shadow border-0">
-    <div class="card-body">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <div class="mb-4">
+                <a href="{{ url_for('teacher.my_quizzes') }}" class="btn btn-sm btn-link text-decoration-none p-0 mb-2 text-body-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Wróć do listy quizów
+                </a>
+                <h2 class="fw-bold mb-0">Edytuj quiz: <span class="text-primary">{{ quiz.title }}</span></h2>
+            </div>
 
-      <h3 class="mb-4">Edytuj quiz: <strong>{{ quiz.title }}</strong></h3>
-
-      <!-- Formularz zmiany tytułu -->
-      <form method="POST" class="mb-4">
-        <div class="mb-3">
-          <label for="title" class="form-label">Tytuł quizu</label>
-          <input type="text" class="form-control" id="title" name="title" value="{{ quiz.title }}" required>
-        </div>
-        <button type="submit" class="btn btn-primary">💾 Zapisz zmiany</button>
-        <a href="{{ url_for('teacher.my_quizzes') }}" class="btn btn-outline-secondary">⬅ Wróć do listy</a>
-      </form>
-
-      <hr>
-
-      <!-- Sekcja pytań -->
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4>Pytania w quizie</h4>
-        <a href="{{ url_for('quiz.add_question', quiz_id=quiz.id) }}" class="btn btn-success">➕ Dodaj pytanie</a>
-      </div>
-
-      {% if quiz.questions %}
-        <ul class="list-group">
-          {% for q in quiz.questions %}
-            <li class="list-group-item">
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <strong>{{ loop.index }}. {{ q.text }}</strong>
-                  <ul class="mt-2 mb-0">
-                    {% for a in q.answers %}
-                      <li>
-                        {{ a.text }}
-                        {% if a.is_correct %}
-                          <span class="badge bg-success ms-2">poprawna</span>
-                        {% endif %}
-                      </li>
-                    {% endfor %}
-                  </ul>
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">
+                        <i class="fas fa-cog text-primary me-2"></i>Informacje o quizie
+                    </h5>
+                    
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="title" class="form-label small text-uppercase fw-bold text-body-secondary">Tytuł quizu</label>
+                            <input type="text" class="form-control form-control-lg" id="title" name="title" value="{{ quiz.title }}" disabled>
+                        </div>
+                        <button type="submit" class="btn btn-accent rounded-pill px-4 shadow-sm fw-bold">
+                            <i class="fas fa-save me-1"></i> Zapisz zmiany
+                        </button>
+                    </form>
                 </div>
+            </div>
 
-                <!-- Przycisk usuwania pytania -->
-                <form method="POST" action="{{ url_for('quiz.delete_question', question_id=q.id, quiz_id=quiz.id) }}">
-                  <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Na pewno usunąć to pytanie?')">🗑 Usuń</button>
-                </form>
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>Brak pytań w tym quizie.</p>
-      {% endif %}
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0">
+                            <i class="fas fa-list-ol text-primary me-2"></i>Pytania ({{ quiz.questions|length }})
+                        </h5>
+                        <a href="{{ url_for('quiz.add_question', quiz_id=quiz.id) }}" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                            <i class="fas fa-plus me-1"></i> Dodaj pytanie
+                        </a>
+                    </div>
+
+                    {% if quiz.questions %}
+                        <div class="list-group list-group-flush">
+                            {% for q in quiz.questions %}
+                                <div class="list-group-item px-0 py-4 bg-transparent border-bottom">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold fs-5 mb-3">
+                                                <span class="text-primary opacity-75 me-2">{{ loop.index }}.</span> {{ q.text }}
+                                            </div>
+                                            
+                                            <div class="row g-2">
+                                                {% for a in q.answers %}
+                                                    <div class="col-md-6">
+                                                        <div class="p-2 rounded-3 border {% if a.is_correct %}bg-success-subtle border-success text-success-emphasis{% else %}bg-body-tertiary border-secondary-subtle text-body-secondary{% endif %} small">
+                                                            <i class="fas {% if a.is_correct %}fa-check-circle{% else %}fa-circle opacity-25{% endif %} me-2"></i>
+                                                            {{ a.text }}
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+
+                                        <form method="POST" action="{{ url_for('quiz.delete_question', question_id=q.id, quiz_id=quiz.id) }}" class="ms-3">
+                                            <button type="submit" class="btn btn-outline-danger border-0 rounded-circle shadow-none" 
+                                                    onclick="return confirm('Czy na pewno chcesz trwale usunąć to pytanie?')" 
+                                                    style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-signature text-body-secondary opacity-25 fa-3x mb-3"></i>
+                            <p class="text-body-secondary">Brak pytań. Kliknij przycisk powyżej, aby dodać pierwsze pytanie.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
     </div>
-  </div>
 </div>
+
 {% endblock %}

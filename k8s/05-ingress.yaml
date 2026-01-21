@@ -5,7 +5,7 @@ metadata:
   namespace: quiz-web-app
 spec:
   rules:
-  - host: quiz.local
+  - host: quiz-web-app-cloud.francecentral.cloudapp.azure.com
     http:
        paths:
        - path: /
