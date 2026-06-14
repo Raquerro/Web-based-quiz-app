@@ -51,3 +51,5 @@ Jeśli chcesz całkowicie wyczyścić środowisko **łącznie z danymi przechowy
 ```bash
 docker compose -f dev-docker-compose.yml down -v
 ```
+
+Projekt jest przystosowany do deploymentu na platformie **Railway**.
